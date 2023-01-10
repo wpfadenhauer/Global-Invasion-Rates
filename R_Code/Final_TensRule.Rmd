@@ -1,0 +1,523 @@
+---
+title: "Final_TensRule"
+author: "Will Pfadenhauer"
+date: "2022-12-22"
+output: html_document
+---
+
+Load data & packages
+```{r}
+require(data.table)
+require(dplyr)
+require(tidyr)
+require(naniar)
+require(ggplot2)
+require(Hmisc)
+
+#Load data
+data <- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/December_Database_Backup.csv")
+
+```
+
+**WGSRPD Level 1 - Continents**
+
+Make a Data Table to Store continent Results
+```{r}
+AllContsDestinations <- data.table()
+AllContsDestinations$Continent <- c(",1,", ",2,", ",3,", ",4,", ",5,", ",6,", ",7,", ",8,", ",9,")
+AllContsDestinations$Names <- c("Europe", "Africa", "Asia Temperate", "Asia Tropical", "Australasia", "Pacific", "Northern America", "Southern America", "Antarctic")
+AllContsDestinations$EstablishedSpecies <- ""
+AllContsDestinations$InvasiveSpecies <- ""
+```
+
+Count established and invasive species for each continent
+```{r}
+a <- c(1:9)
+for (i in a) {
+  
+#Need species with Invasive_L1 = whatever L1 region is in Row i
+Region_I <- data[grep(paste(AllContsDestinations[i,1] ), data$Invasive_L1),]
+
+#Remove species with Native L1 = whatever L1 region is in Row i 
+Region_I <- Region_I[-(grep(paste(AllContsDestinations[i,1]), Region_I$Native_L1)), ]
+
+#Remove excess columns
+Region_I <- Region_I[,c(1)]
+
+#Label as invasive
+Region_I$type = "1"
+
+#Need species with Established_L1 = whatever L1 region is in Row i
+Region_E <- data[grep(paste(AllContsDestinations[i,1] ), data$Established_L1),]
+
+#Remove species with Native L1 = whatever L1 region is in Row i
+Region_E <- Region_E[-(grep(paste(AllContsDestinations[i,1]), Region_E$Native_L1)),]
+
+#Remove invasive species from our established list
+Region_E <-  Region_E[-(grep(paste(AllContsDestinations[i,1] ), Region_E$Invasive_L1)), ]
+
+#Remove excess columns
+Region_E <- Region_E[,c(1)]
+
+#Label as established
+Region_E$type = "0"
+
+#Rbind Invaders to Established 
+Region <- rbind(Region_I, Region_E)
+
+Region_count <- table(Region$type)
+
+AllContsDestinations[i,3] <- paste(Region_count[1])
+AllContsDestinations[i,4] <- paste(Region_count[2])
+
+rm(Region)
+rm(Region_E)
+rm(Region_I)
+rm(Region_count)
+  
+ message('Running Region ', i, ' of 9')
+
+}
+
+#Calculate Invasion Rates
+AllContsDestinations$EstablishedSpecies <- as.integer(AllContsDestinations$EstablishedSpecies)
+AllContsDestinations$InvasiveSpecies <- as.integer(AllContsDestinations$InvasiveSpecies)
+AllContsDestinations$Total <- (AllContsDestinations$EstablishedSpecies + AllContsDestinations$InvasiveSpecies)
+AllContsDestinations$InvasionRate <- (AllContsDestinations$InvasiveSpecies/AllContsDestinations$Total)
+
+#Remove Antarctica
+AllContsDestinations <- AllContsDestinations[-c(9),]
+
+#What's the average invasion rate for all continents?
+mean(AllContsDestinations$InvasionRate)
+
+#Prepare data for plotting
+pd_1 <- AllContsDestinations[,c(1,6)]
+pd_1$Scale <- "L1"
+```
+
+Compare L1 average to Tens Rule using T-Test
+```{r}
+test <- t.test(AllContsDestinations$InvasionRate,
+  mu = 0.10)
+
+test
+```
+I recommend removing all objects except pd_1 from workspace and reloading the first code chunk at the top before proceeding to L2 regions. 
+
+**WGSRPD Level 2 - Sub-Continental Regions**
+
+Need to create a list of all L2 regions
+```{r}
+#Expand L4 regions
+data_e <- separate_rows(data, Established_L2, sep = ",")
+data_i <- separate_rows(data, Invasive_L2, sep = ",")
+data_n <- separate_rows(data, Native_L2, sep = ",")
+
+#remove extra columns
+data_e <- data_e[,c(1,8)]
+data_i <- data_i[,c(1,12)]
+data_n <- data_n[,c(1,4)]
+
+#rename for matching
+data_e <- rename(data_e, "L2" ="Established_L2")
+data_i <- rename(data_i, "L2" ="Invasive_L2")
+data_n <- rename(data_n, "L2" ="Native_L2")
+
+#Combine all L4 regions
+full_l2 <-rbind(data_e, data_i)
+full_l2 <- rbind(full_l2, data_n)
+
+#Remove duplicates
+full_l2 <- distinct(full_l2,
+                    L2)
+
+#Sort by numeric order
+full_l2$L2 <- as.integer(full_l2$L2)
+full_l2 <- full_l2[order(full_l2$L2),]
+
+#Remove NA row
+full_l2 <- full_l2[-c(54),]
+```
+
+Make a Data Table to Store L2 Results
+```{r}
+All2Destinations <- data.table()
+All2Destinations$L2s <- paste(",", full_l2$L2, ",", sep = "")
+All2Destinations$EstablishedSpecies <- ""
+All2Destinations$InvasiveSpecies <- ""
+```
+
+Count established and invasive species for each L2 region
+```{r}
+a <- c(1:53)
+for (i in a) {
+  
+#Need species with Invasive_L2 = whatever L2 region is in Row i
+Region_I <- data[grep(paste(All2Destinations[i,1] ), data$Invasive_L2),]
+
+#Remove species with Native L2 = whatever L2 region is in Row i 
+Region_I <- Region_I[-(grep(paste(All2Destinations[i,1]), Region_I$Native_L2)), ]
+
+#Remove excess columns
+Region_I <- Region_I[,c(1)]
+
+#Label as invasive
+Region_I$type = "1"
+
+#Need species with Established_L2 = whatever L2 region is in Row i
+Region_E <- data[grep(paste(All2Destinations[i,1] ), data$Established_L2),]
+
+#Remove species with Native L2 = whatever L2 region is in Row i
+Region_E <- Region_E[-(grep(paste(All2Destinations[i,1]), Region_E$Native_L2)),]
+
+#Remove invasive species from our established list
+Region_E <-  Region_E[-(grep(paste(All2Destinations[i,1] ), Region_E$Invasive_L2)), ]
+
+#Remove excess columns
+Region_E <- Region_E[,c(1)]
+
+#Label as established
+Region_E$type = "0"
+
+#Rbind Invaders to Established 
+Region <- rbind(Region_I, Region_E)
+
+Region_count <- table(Region$type)
+
+All2Destinations[i,2] <- paste(Region_count[1])
+All2Destinations[i,3] <- paste(Region_count[2])
+
+rm(Region)
+rm(Region_E)
+rm(Region_I)
+rm(Region_count)
+  
+ message('Running Region ', i, ' of 53')
+
+}
+```
+
+```{r}
+#Remove NAs
+All2Destinations <- as.data.frame(All2Destinations)
+All2Destinations <- replace_with_na(All2Destinations, replace = list(EstablishedSpecies = c("NA")))
+All2Destinations <- replace_with_na(All2Destinations, replace = list(InvasiveSpecies = c("NA")))
+All2Destinations <- na.omit(All2Destinations)
+
+#Calculate Invasion Rates
+All2Destinations$EstablishedSpecies <- as.integer(All2Destinations$EstablishedSpecies)
+All2Destinations$InvasiveSpecies <- as.integer(All2Destinations$InvasiveSpecies)
+All2Destinations$Total <- (All2Destinations$EstablishedSpecies + All2Destinations$InvasiveSpecies)
+All2Destinations$InvasionRate <- (All2Destinations$InvasiveSpecies/All2Destinations$Total)
+
+#What's the average invasion rate for all L2 regions?
+mean(All2Destinations$InvasionRate)
+
+#Prepare data for plotting
+pd_2 <- All2Destinations[,c(1,5)]
+pd_2$Scale <- "L2"
+```
+
+Compare L2 average to Tens Rule using T-Test
+```{r}
+test2 <- t.test(All2Destinations$InvasionRate,
+  mu = 0.10)
+
+test2
+```
+I recommend removing all objects except pd_1 and pd_2 from workspace and reloading the first code chunk at the top before proceeding to L3 regions. 
+
+**WGSRPD Level 3 - Countries/States**
+
+Need to create a list of all L3 regions
+```{r}
+#Expand L3 regions
+data_e <- separate_rows(data, Established_L3, sep = ",")
+data_i <- separate_rows(data, Invasive_L3, sep = ",")
+data_n <- separate_rows(data, Native_L3, sep = ",")
+
+#remove extra columns
+data_e <- data_e[,c(1,9)]
+data_i <- data_i[,c(1,13)]
+data_n <- data_n[,c(1,5)]
+
+#rename for matching
+data_e <- rename(data_e, "L3" ="Established_L3")
+data_i <- rename(data_i, "L3" ="Invasive_L3")
+data_n <- rename(data_n, "L3" ="Native_L3")
+
+#Combine all L3 regions
+full_l3 <-rbind(data_e, data_i)
+full_l3 <- rbind(full_l3, data_n)
+
+#Remove duplicates
+full_l3 <- distinct(full_l3,
+                    L3)
+
+#Sort by alphabetical order
+full_l3 <- full_l3[order(full_l3$L3),]
+
+#Remove weird rows
+full_l3 <- full_l3[-c(1),]
+```
+
+Make a Data Table to Store L3 Results
+```{r}
+All3Destinations <- data.table()
+All3Destinations$L3s <- paste(",", full_l3$L3, ",", sep = "")
+All3Destinations$EstablishedSpecies <- ""
+All3Destinations$InvasiveSpecies <- ""
+```
+
+Count established and invasive species for each L3 region
+```{r}
+a <- c(1:368)
+for (i in a) {
+  
+#Need species with Invasive_L3 = whatever L3 region is in Row i
+Region_I <- data[grep(paste(All3Destinations[i,1] ), data$Invasive_L3),]
+
+#Remove species with Native L3 = whatever L3 region is in Row i 
+Region_I <- Region_I[-(grep(paste(All3Destinations[i,1]), Region_I$Native_L3)), ]
+
+#Remove excess columns
+Region_I <- Region_I[,c(1)]
+
+#Label as invasive
+Region_I$type = "1"
+
+#Need species with Established_L3 = whatever L3 region is in Row i
+Region_E <- data[grep(paste(All3Destinations[i,1] ), data$Established_L3),]
+
+#Remove species with Native L3 = whatever L3 region is in Row i
+Region_E <- Region_E[-(grep(paste(All3Destinations[i,1]), Region_E$Native_L3)),]
+
+#Remove invasive species from our established list
+Region_E <-  Region_E[-(grep(paste(All3Destinations[i,1] ), Region_E$Invasive_L3)), ]
+
+#Remove excess columns
+Region_E <- Region_E[,c(1)]
+
+#Label as established
+Region_E$type = "0"
+
+#Rbind Invaders to Established 
+Region <- rbind(Region_I, Region_E)
+
+Region_count <- table(Region$type)
+
+All3Destinations[i,2] <- paste(Region_count[1])
+All3Destinations[i,3] <- paste(Region_count[2])
+
+rm(Region)
+rm(Region_E)
+rm(Region_I)
+rm(Region_count)
+  
+ message('Running Region ', i, ' of 368')
+
+}
+```
+
+```{r}
+#Remove NAs
+All3Destinations <- as.data.frame(All3Destinations)
+All3Destinations <- replace_with_na(All3Destinations, replace = list(EstablishedSpecies = c("NA")))
+All3Destinations <- replace_with_na(All3Destinations, replace = list(InvasiveSpecies = c("NA")))
+All3Destinations <- na.omit(All3Destinations)
+
+#Calculate Invasion Rates
+All3Destinations$EstablishedSpecies <- as.integer(All3Destinations$EstablishedSpecies)
+All3Destinations$InvasiveSpecies <- as.integer(All3Destinations$InvasiveSpecies)
+All3Destinations$Total <- (All3Destinations$EstablishedSpecies + All3Destinations$InvasiveSpecies)
+All3Destinations$InvasionRate <- (All3Destinations$InvasiveSpecies/All3Destinations$Total)
+
+#What's the average invasion rate for all L3 regions?
+mean(All3Destinations$InvasionRate)
+
+#Prepare data for plotting
+pd_3 <- All3Destinations[,c(1,5)]
+pd_3$Scale <- "L3"
+
+#Remove commas before exporting
+All3Destinations$L3s <- gsub(",", "", All3Destinations$L3s)
+
+#Export for mapping in ArcGIS Pro
+fwrite(All3Destinations, "C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/L3MappingData.csv")
+
+```
+
+Compare L3 average to Tens Rule using T-Test
+```{r}
+test3 <- t.test(All3Destinations$InvasionRate,
+  mu = 0.10)
+
+test3
+```
+I recommend removing all objects except pd_1, pd_2, and pd_3 from workspace and reloading the first code chunk at the top before proceeding to L4 regions. 
+
+
+**WGSRPD Level 4 - Small Countries/ States**
+
+Need to create a list of all L3 regions
+```{r}
+#Expand L4 regions
+data_e <- separate_rows(data, Established_L4, sep = ",")
+data_i <- separate_rows(data, Invasive_L4, sep = ",")
+data_n <- separate_rows(data, Native_L4, sep = ",")
+
+#remove extra columns
+data_e <- data_e[,c(1,10)]
+data_i <- data_i[,c(1,14)]
+data_n <- data_n[,c(1,6)]
+
+#rename for matching
+data_e <- rename(data_e, "L4" ="Established_L4")
+data_i <- rename(data_i, "L4" ="Invasive_L4")
+data_n <- rename(data_n, "L4" ="Native_L4")
+
+#Combine all L4 regions
+full_l4 <-rbind(data_e, data_i)
+full_l4 <- rbind(full_l4, data_n)
+
+#Remove duplicates
+full_l4 <- distinct(full_l4,
+                    L4)
+
+#Remove regions ending in -OO (not true L4 regions - those are converted L3 regions)
+full_l4 <- as.data.frame(full_l4[!grepl("-OO", full_l4$L4),])
+
+#Sort by alphabetical order
+full_l4 <- as.data.table(full_l4[order(full_l4$L4),])
+
+#Remove weird rows
+full_l4 <- as.data.table(full_l4[-c(1),])
+```
+
+Make a Data Table to Store L4 Results
+```{r}
+All4Destinations <- data.table()
+All4Destinations$L4s <- paste(",", full_l4$V1, ",", sep = "")
+All4Destinations$EstablishedSpecies <- ""
+All4Destinations$InvasiveSpecies <- ""
+```
+
+Count established and invasive species for each L4 region
+```{r}
+a <- c(1:271)
+for (i in a) {
+  
+#Need species with Invasive_L4 = whatever L4 region is in Row i
+Region_I <- data[grep(paste(All4Destinations[i,1] ), data$Invasive_L4),]
+
+#Remove species with Native L4 = whatever L4 region is in Row i 
+Region_I <- Region_I[-(grep(paste(All4Destinations[i,1]), Region_I$Native_L4)), ]
+
+#Remove excess columns
+Region_I <- Region_I[,c(1)]
+
+#Label as invasive
+Region_I$type = "1"
+
+#Need species with Established_L4 = whatever L4 region is in Row i
+Region_E <- data[grep(paste(All4Destinations[i,1] ), data$Established_L4),]
+
+#Remove species with Native L4 = whatever L4 region is in Row i
+Region_E <- Region_E[-(grep(paste(All4Destinations[i,1]), Region_E$Native_L4)),]
+
+#Remove invasive species from our established list
+Region_E <-  Region_E[-(grep(paste(All4Destinations[i,1] ), Region_E$Invasive_L4)), ]
+
+#Remove excess columns
+Region_E <- Region_E[,c(1)]
+
+#Label as established
+Region_E$type = "0"
+
+#Rbind Invaders to Established 
+Region <- rbind(Region_I, Region_E)
+
+Region_count <- table(Region$type)
+
+All4Destinations[i,2] <- paste(Region_count[1])
+All4Destinations[i,3] <- paste(Region_count[2])
+
+rm(Region)
+rm(Region_E)
+rm(Region_I)
+rm(Region_count)
+  
+ message('Running Region ', i, ' of 271')
+
+}
+```
+
+```{r}
+#Remove NAs
+All4Destinations <- as.data.frame(All4Destinations)
+All4Destinations <- replace_with_na(All4Destinations, replace = list(EstablishedSpecies = c("NA")))
+All4Destinations <- replace_with_na(All4Destinations, replace = list(InvasiveSpecies = c("NA")))
+All4Destinations <- na.omit(All4Destinations)
+
+#Calculate Invasion Rates
+All4Destinations$EstablishedSpecies <- as.integer(All4Destinations$EstablishedSpecies)
+All4Destinations$InvasiveSpecies <- as.integer(All4Destinations$InvasiveSpecies)
+All4Destinations$Total <- (All4Destinations$EstablishedSpecies + All4Destinations$InvasiveSpecies)
+All4Destinations$InvasionRate <- (All4Destinations$InvasiveSpecies/All4Destinations$Total)
+
+#What's the average invasion rate for all L4 regions?
+mean(All4Destinations$InvasionRate)
+
+#Prepare data for plotting
+pd_4 <- All4Destinations[,c(1,5)]
+pd_4$Scale <- "L4"
+```
+
+Compare L4 average to Tens Rule using T-Test
+```{r}
+test4 <- t.test(All4Destinations$InvasionRate,
+  mu = 0.10)
+
+test4
+```
+
+**Confidence Interval Plot**
+```{r}
+#Rename columns for rbind
+pd_1 <- rename(pd_1, "Region" ="Continent")
+pd_2 <- rename(pd_2, "Region" ="L2s")
+pd_3 <- rename(pd_3, "Region" ="L3s")
+pd_4 <- rename(pd_4, "Region" ="L4s")
+
+#Bind all pd objects
+pd <- rbind(pd_1, pd_2)
+pd <- rbind(pd, pd_3)
+pd <- rbind(pd, pd_4)
+
+#Attach p-values
+pd$pv <-""
+pd <- setDT(pd)[Scale == "L1", pv:="2.4e-05"]
+pd <- setDT(pd)[Scale == "L2", pv:="2.4e-05"]
+pd <- setDT(pd)[Scale == "L3", pv:="1.3e-07"]
+pd <- setDT(pd)[Scale == "L4", pv:="0.048"]
+
+#Attach sample sizes
+pd <- pd %>% 
+  group_by(Scale) %>% mutate(n = n()) %>% 
+  mutate(label = paste0(Scale,'\nn = ',n,'\np = ',pv))
+
+#build plot
+g <- ggplot(pd, aes(x=`label`, y=`InvasionRate`, colour=`Scale`))+ 
+                stat_summary(geom="point", fun=mean, size= 3 ) +
+                stat_summary(geom="errorbar", fun.data=mean_cl_normal, width=0.1, linewidth=1) +
+                xlab("Scale (WGSRPD Level)") +
+                ylab("Invasion Rate (%)") +
+                coord_cartesian(ylim=c(0.05, 0.30)) +
+                theme(legend.position = "none") +
+                geom_hline(yintercept= 0.1, linetype="dashed", color = "black", linewidth=0.6)
+
+#View plot
+g
+```
+

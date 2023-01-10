@@ -1,0 +1,605 @@
+---
+title: "Final_Climates"
+author: "Will Pfadenhauer"
+date: "2023-01-03"
+output: html_document
+---
+
+## 1. Prepping data. No need to run this more than once.
+
+Load data & packages
+
+```{r}
+require(data.table)
+require(dplyr)
+require(tidyr)
+require(PropCIs)
+require(ggplot2)
+require(forcats)
+require(scoringutils)
+
+#Load data
+data <- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/December_Database_Backup.csv")
+```
+
+Need to create a list of all L4 regions
+
+```{r}
+#Expand L4 regions
+data_e <- separate_rows(data, Established_L4, sep = ",")
+data_i <- separate_rows(data, Invasive_L4, sep = ",")
+data_n <- separate_rows(data, Native_L4, sep = ",")
+
+#remove extra columns
+data_e <- data_e[,c(1,10)]
+data_i <- data_i[,c(1,14)]
+data_n <- data_n[,c(1,6)]
+
+#rename for matching
+data_e <- rename(data_e, "L4" ="Established_L4")
+data_i <- rename(data_i, "L4" ="Invasive_L4")
+data_n <- rename(data_n, "L4" ="Native_L4")
+
+#Combine all L4 regions
+full_l4 <-rbind(data_e, data_i)
+full_l4 <- rbind(full_l4, data_n)
+
+#Remove duplicates
+full_l4 <- distinct(full_l4,
+                    L4)
+
+#Sort by alphabetical order
+full_l4 <- full_l4[order(full_l4$L4),]
+
+#Remove weird rows
+full_l4 <- full_l4[-c(1),]
+
+rm(data_e)
+rm(data_i)
+rm(data_n)
+```
+
+Removing overlaps
+
+```{r}
+#Un-collapse Native and Invaded regions
+overlaps <- separate_rows(data, Native_L4, sep=",")
+overlaps <- separate_rows(overlaps, Invasive_L4, sep=",")
+
+#For loop to remove matching invasive combinations
+a <- c(1:636)
+for (i in a) {
+  
+overlaps <- overlaps[!((paste(full_l4[i,1])==overlaps$Native_L4) &
+                          (paste(full_l4[i,1])==overlaps$Invasive_L4)),]
+
+ message('Running Region ', i, ' of 636')
+}
+
+#Collapse Invasive_L4
+overlaps_test <- overlaps %>%
+  select(1:14) %>% 
+  group_by(Accepted_name, Native_L4) %>%
+  mutate(Invasive_L4.x = paste(Invasive_L4, collapse = ","))
+
+overlaps_test <- distinct(overlaps_test,
+                     Accepted_name,
+                     Native_L4,
+                     .keep_all = TRUE)
+
+overlaps_test <- overlaps_test[,-c(14)]
+overlaps_test <- rename(overlaps_test, "Invasive_L4" ="Invasive_L4.x")
+rm(overlaps)
+
+#Expand Established_L4
+overlaps_test <- separate_rows(overlaps_test, Established_L4, sep=",")
+
+#Run another for-loop to remove matching established combinations
+for (i in a) {
+overlaps_test <- overlaps_test[!((paste(full_l4[i,1])==overlaps_test$Native_L4) &
+                          (paste(full_l4[i,1])==overlaps_test$Established_L4)),]
+
+ message('Running Region ', i, ' of 636')
+}
+
+#Collapse Established_L4
+overlaps_test2 <- overlaps_test %>%
+  select(1:14) %>% 
+  group_by(Accepted_name, Native_L4) %>%
+  mutate(Established_L4.x = paste(Established_L4, collapse = ","))
+
+overlaps_test2 <- distinct(overlaps_test2,
+                     Accepted_name,
+                     Native_L4,
+                     .keep_all = TRUE)
+
+overlaps_test2 <- overlaps_test2[,-c(10)]
+overlaps_test2 <- rename(overlaps_test2, "Established_L4" ="Established_L4.x")
+overlaps_test2 <-overlaps_test2[,c(1:9,14,10:13)]
+
+#Collapse Native_L4
+overlaps_test2 <- overlaps_test2 %>%
+  select(1:14) %>% 
+  group_by(Accepted_name) %>%
+  mutate(Native_L4.x = paste(Native_L4, collapse = ","))
+
+overlaps_test2 <- distinct(overlaps_test2,
+                     Accepted_name,
+                     .keep_all = TRUE)
+
+overlaps_test2 <- overlaps_test2[,-c(6)]
+overlaps_test2 <- rename(overlaps_test2, "Native_L4" ="Native_L4.x")
+overlaps_test2 <-overlaps_test2[,c(1:5,14,6:13)]
+
+#Export results
+fwrite(overlaps_test2, "C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/Climate_Data/January_Climate_Overlaps_Removed_Backup.csv")
+
+rm(overlaps_test)
+rm(overlaps_test2)
+rm(a)
+rm(i)
+rm(data)
+rm(full_l4)
+```
+
+## 2. If you're just rerunning code, you can start here.
+
+Join regions to matching climates
+
+```{r}
+data <- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/Climate_Data/January_Climate_Overlaps_Removed_Backup.csv")
+
+clim_l4 <- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/Climate_Data/L4_Better_Climate_data.csv")
+clim_l3 <- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/Climate_Data/L3_Better_Climate_data.csv")
+
+#Expand L4 regions
+data_e <- separate_rows(data, Established_L4, sep = ",")
+data_i <- separate_rows(data, Invasive_L4, sep = ",")
+data_n <- separate_rows(data, Native_L4, sep = ",")
+
+#Join regions to l4 climates
+data_e <-left_join(data_e, clim_l4, by=c("Established_L4"="Level4_cod")) 
+data_i <-left_join(data_i, clim_l4, by=c("Invasive_L4"="Level4_cod")) 
+data_n <-left_join(data_n, clim_l4, by=c("Native_L4"="Level4_cod"))
+
+#Join remaining established regions to l3 climates
+data_e <-left_join(data_e, clim_l3, by=c("Established_L4"="LEVEL3_COD")) 
+data_e <- setDT(data_e)[MAJORITY.x == "", MAJORITY.x:= MAJORITY.y]
+data_e <- setDT(data_e)[is.na(MAJORITY.x), MAJORITY.x:= MAJORITY.y]
+
+#Join remaining invaded regions to l3 climates
+data_i <-left_join(data_i, clim_l3, by=c("Invasive_L4"="LEVEL3_COD")) 
+data_i <- setDT(data_i)[MAJORITY.x == "", MAJORITY.x:= MAJORITY.y]
+data_i <- setDT(data_i)[is.na(MAJORITY.x), MAJORITY.x:= MAJORITY.y]
+
+#Join remaining native regions to l3 climates
+data_n <-left_join(data_n, clim_l3, by=c("Native_L4"="LEVEL3_COD")) 
+data_n <- setDT(data_n)[MAJORITY.x == "", MAJORITY.x:= MAJORITY.y]
+data_n <- setDT(data_n)[is.na(MAJORITY.x), MAJORITY.x:= MAJORITY.y]
+
+rm(clim_l3)
+rm(clim_l4)
+```
+
+If you want Islands or Mainlands Removed, do these steps. Otherwise, move on to next code chunk.
+
+```{r}
+glonaf_tdwg <- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/Species_Lists/GloNAF/Region_GloNAF_vanKleunenetal2018Ecology.csv")
+
+extra_islands<- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/Island_Data/Extra_Islands.csv")
+
+glonaf_tdwg <- glonaf_tdwg[,-c(1:3,5,7:13)]
+glonaf_tdwg <- distinct(glonaf_tdwg, 
+                        tdwg4,
+                        .keep_all = TRUE)
+all_islands <- rbind(glonaf_tdwg, extra_islands)
+all_islands <- distinct(all_islands,
+                        tdwg4,
+                        .keep_all = TRUE)
+
+#Join regions to l4 regions from GloNAF
+data_e <-left_join(data_e, all_islands, by=c("Established_L4"="tdwg4")) 
+data_i <-left_join(data_i, all_islands, by=c("Invasive_L4"="tdwg4")) 
+data_n <-left_join(data_n, all_islands, by=c("Native_L4"="tdwg4"))
+
+#If these are set to 1, removes islands. If these are set to 0, removes mainlands.
+data_e <- data_e[!data_e$island=="0",]
+data_i <- data_i[!data_i$island=="0",]
+data_n <- data_n[!data_n$island=="0",]
+
+data_e <- data_e[,-c(17)]
+data_i <- data_i[,-c(17)]
+data_n <- data_n[,-c(17)]
+
+rm(glonaf_tdwg)
+rm(all_islands)
+rm(extra_islands)
+
+```
+
+Continue here.
+
+```{r}
+#Recombine MAJORITY columns into strings (invaded)
+data_i <- data_i %>%
+  select(Accepted_name, MAJORITY.x) %>% 
+  group_by(Accepted_name) %>%
+  mutate(invaded_climates = paste(MAJORITY.x, collapse = ","))
+
+data_i <- distinct(data_i,
+                  Accepted_name,
+                  .keep_all = TRUE)
+data_i <- data_i[,-c(2)]
+
+#Recombine MAJORITY columns into strings (established)
+data_e <- data_e %>%
+  select(Accepted_name, MAJORITY.x) %>% 
+  group_by(Accepted_name) %>%
+  mutate(established_climates = paste(MAJORITY.x, collapse = ","))
+
+data_e <- distinct(data_e,
+                  Accepted_name,
+                  .keep_all = TRUE)
+data_e <- data_e[,-c(2)]
+
+#Recombine MAJORITY columns into strings (native)
+data_n <- data_n %>%
+  select(Accepted_name, MAJORITY.x) %>% 
+  group_by(Accepted_name) %>%
+  mutate(native_climates = paste(MAJORITY.x, collapse = ","))
+
+data_n <- distinct(data_n,
+                  Accepted_name,
+                  .keep_all = TRUE)
+data_n <- data_n[,-c(2)]
+
+#Full climate lists
+name_status <- data[,c(1,2)]
+full_climates <- left_join(name_status, data_n)
+full_climates <- left_join(full_climates, data_e)
+full_climates <- left_join(full_climates, data_i)
+rm(name_status)
+
+#Add commas to make elements easier to search
+full_climates$established_climates<- paste(",",full_climates$established_climates, sep="")
+full_climates$invaded_climates<- paste(",",full_climates$invaded_climates, sep="")
+full_climates$native_climates<- paste(",",full_climates$native_climates, sep="")
+
+full_climates$established_climates<- paste(full_climates$established_climates,",", sep="")
+full_climates$invaded_climates<- paste(full_climates$invaded_climates,",", sep="")
+full_climates$native_climates<- paste(full_climates$native_climates,",", sep="")
+
+#Remove NAs
+full_climates$native_climates <- gsub("NA", "", full_climates$native_climates)
+full_climates$established_climates <- gsub("NA", "", full_climates$established_climates)
+full_climates$invaded_climates <- gsub("NA", "", full_climates$invaded_climates)
+
+rm(data_e)
+rm(data_i)
+rm(data_n)
+```
+
+From here, you can either move right into the next section. Or you can skip directly to section 4. Climate Flows Results.
+
+## 3. Recipient Climate Results
+
+Making data table for results
+
+```{r}
+#Make a Data Table to Store Destination Results
+ClimatesAsDestinations <- data.table()
+ClimatesAsDestinations$Nums <- c(",1,|,2,|,3,|,4,",
+                                 ",5,|,6,|,7,|,8,",
+                                 ",9,|,10,|,11,|,12,|,13,|,14,|,15,|,16,|,17,",
+                                 ",18,|,19,|,20,|,21,|,22,|,23,|,24,|,25,|,26,|,27,|,28,|,29,",
+                                 ",30,|,31,")
+ClimatesAsDestinations$Climate <- c("Tropical", "Arid", "Temperate", "Continental", "Polar")
+ClimatesAsDestinations$EstablishedSpecies <- ""
+ClimatesAsDestinations$InvasiveSpecies <- ""
+```
+
+Count established and invasive species arriving in each climate
+
+```{r}
+a <- c(1:5)
+for (i in a) {
+  
+#Need species with invaded climates = whatever Climate is in Row i
+Climate_I <- full_climates[grep(paste(ClimatesAsDestinations[i,1] ), full_climates$invaded_climates),]
+
+#Remove excess columns
+Climate_I <- Climate_I[,c(1)]
+
+#Label as invasive
+Climate_I$type = "1"
+
+#Need species with Established climates = whatever  Climate is in Row i
+Climate_E <- full_climates[grep(paste(ClimatesAsDestinations[i,1] ), full_climates$established_climates),]
+
+#Remove invasive species from our established list
+Climate_E <-  Climate_E[-(grep(paste(ClimatesAsDestinations[i,1] ), Climate_E$invaded_climates)),]
+
+#Remove excess columns
+Climate_E <- Climate_E[,c(1)]
+
+#Label as established
+Climate_E$type = "0"
+
+#Rbind Invaders to Established 
+Climate <- rbind(Climate_I, Climate_E)
+
+Climate_count <- table(Climate$type)
+
+ClimatesAsDestinations[i,3] <- paste(Climate_count[1])
+ClimatesAsDestinations[i,4] <- paste(Climate_count[2])
+
+rm(Climate)
+rm(Climate_E)
+rm(Climate_I)
+rm(Climate_count)
+  
+ message('Running Climate ', i, ' of 5')
+
+}
+
+#Calculate Invasion Rates
+ClimatesAsDestinations$EstablishedSpecies <- as.integer(ClimatesAsDestinations$EstablishedSpecies)
+ClimatesAsDestinations$InvasiveSpecies <- as.integer(ClimatesAsDestinations$InvasiveSpecies)
+ClimatesAsDestinations$Total <- (ClimatesAsDestinations$EstablishedSpecies + ClimatesAsDestinations$InvasiveSpecies)
+ClimatesAsDestinations$InvasionRate <- (ClimatesAsDestinations$InvasiveSpecies/ClimatesAsDestinations$Total)
+
+#Run this - or not - depending on whether you removed islands earlier
+#NoI_ClimatesAsDestinations <- ClimatesAsDestinations
+NoM_ClimatesAsDestinations <- ClimatesAsDestinations
+
+```
+
+Plotting Invasion Rates for Recipient Climates (Point Plot with Error Bars)
+
+```{r}
+#Assign results to correct categories
+NoI_ClimatesAsDestinations$IslandData <- paste("Mainlands Only")
+new_row    <- data.table(`Climate` = "All")
+NOIC <- rbind(NoI_ClimatesAsDestinations, new_row, fill=TRUE) 
+NOIC[6,7] <- paste("Mainlands Only")
+NOIC[6,5] <- as.numeric(paste(10140))
+NOIC[6,4] <- as.numeric(paste(1517))
+NOIC[6,6] <- NOIC[6,4] / NOIC[6,5]
+
+NoM_ClimatesAsDestinations$IslandData <- paste("Islands Only")
+NOMC <- rbind(NoM_ClimatesAsDestinations, new_row, fill=TRUE)
+NOMC[6,7] <- paste("Islands Only")
+NOMC[6,5] <- as.numeric(paste(6921))
+NOMC[6,4] <- as.numeric(paste(1295))
+NOMC[6,6] <- NOMC[6,4] / NOMC[6,5]
+
+ClimatesAsDestinations$IslandData <- paste("All Data")
+CAD <- rbind(ClimatesAsDestinations, new_row, fill=TRUE)
+CAD[6,7] <- paste("All Data")
+CAD[6,5] <- as.numeric(paste(12126))
+CAD[6,4] <- as.numeric(paste(2039))
+CAD[6,6] <- CAD[6,4] / CAD[6,5]
+
+#Combine results from island data and no island data
+pd <- rbind(CAD, NOMC, NOIC)
+pd$CIMax <- ""
+pd$CIMin <- ""
+
+#Calculate Confidence Intervals
+a <- c(1:18)
+for (i in a) {
+conf <- scoreci(as.integer(paste(pd[i,4])), as.integer(paste(pd[i,5])), conf.level = 0.95)
+pd[i,8] <- conf[1]$conf.int[2]
+pd[i,9] <- conf[1]$conf.int[1]
+}
+
+pd$CIMax <- as.numeric(pd$CIMax)
+pd$CIMin <- as.numeric(pd$CIMin)
+
+pd$label <- paste(c("Tropical",
+                      "Arid",
+                      "Temperate",
+                      "Continental",
+                      "Polar",
+                      "All",
+                      "Tropical_IO",
+                      "Arid_IO",
+                      "Temperate_IO",
+                      "Continental_IO",
+                      "Polar_IO",
+                      "All_IO",
+                      "Tropical_MO",
+                      "Arid_MO",
+                      "Temperate_MO",
+                      "Continental_MO",
+                      "Polar_MO",
+                      "All_MO"))
+
+pd$label <- factor(pd$label, levels=unique(pd$label))
+
+#Build Plot
+g <- ggplot(pd, aes(x= fct_inorder(`label`), y=`InvasionRate`, colour=`Climate`))+ 
+                stat_summary(geom="point", fun=mean, size= 3.1 ) +
+                ylab("Invasion Rate (%)") +
+                coord_cartesian(ylim=c(0, 0.34),xlim = c(0.5,18.5), expand = FALSE, clip = "off") +
+                theme(legend.position = "none",
+                      plot.margin = unit(c(1, 1, 4.5, 1), "lines"),
+                      axis.title.x = element_blank(),
+                      axis.text.x = element_blank(),
+                      axis.title.y = element_text(face="bold")) +
+                geom_hline(yintercept= 0.1, linetype="dashed", color = "black", linewidth=0.6) +
+                geom_vline(aes(xintercept = 6.5)) +
+                geom_vline(aes(xintercept = 12.5)) +
+                annotate(geom = "text", x = seq_len(nrow(pd)), y = -0.02 + rep(c(0,-0.015,0,-0.015,0,-0.015), 3),
+                         label = pd$Climate, size = 3) +
+                annotate(geom = "text", x = 3.5 + (6 * (0:2)), y = -0.06, label = unique(pd$IslandData), 
+                         size = 4, fontface = "bold")
+p <- g + 
+  geom_errorbar(aes(ymin = pd$CIMin, ymax = pd$CIMax), width = 0.2, linewidth =1.2) +
+  scale_color_manual(values=c("black", "#ffb703", "#027fdc", "#07c4c5", "#f76f73", "#0218a2",
+                             "black", "#ffb703", "#027fdc", "#07c4c5", "#f76f73", "#0218a2",
+                             "black", "#ffb703", "#027fdc", "#07c4c5", "#f76f73", "#0218a2"))
+
+```
+
+Significance Testing
+
+```{r}
+#Are the proportions for each climate significantly different than each other?
+pairwise.prop.test(pd$InvasiveSpecies, pd$Total, conf.level=0.95)
+```
+
+## 4. Climate Flows Results
+
+Data Tables for Climate Flows
+
+```{r}
+#Start by making data tables for results (change these names if you're using "no islands" or "no mainlands" data)
+
+#First one will store proportions of Established/Invasive
+CFs <- data.table()
+CFs$Nums <- c(",1,|,2,|,3,|,4,",
+                                 ",5,|,6,|,7,|,8,",
+                                 ",9,|,10,|,11,|,12,|,13,|,14,|,15,|,16,|,17,",
+                                 ",18,|,19,|,20,|,21,|,22,|,23,|,24,|,25,|,26,|,27,|,28,|,29,",
+                                 ",30,|,31,")
+CFs$Climate <- c("To Tropical", "To Arid", "To Temperate", "To Continental", "To Polar")
+CFs$From_Tropical<- ""
+CFs$From_Arid<- ""
+CFs$From_Temperate<- ""
+CFs$From_Continental<- ""
+CFs$From_Polar<- ""
+
+#Next one will store absolute numbers of established species
+CFs_E <- data.table()
+CFs_E$Nums <- c(",1,|,2,|,3,|,4,",
+                                 ",5,|,6,|,7,|,8,",
+                                 ",9,|,10,|,11,|,12,|,13,|,14,|,15,|,16,|,17,",
+                                 ",18,|,19,|,20,|,21,|,22,|,23,|,24,|,25,|,26,|,27,|,28,|,29,",
+                                 ",30,|,31,")
+CFs_E$Climate <- c("To Tropical", "To Arid", "To Temperate", "To Continental", "To Polar")
+CFs_E$From_Tropical<- ""
+CFs_E$From_Arid<- ""
+CFs_E$From_Temperate<- ""
+CFs_E$From_Continental<- ""
+CFs_E$From_Polar<- ""
+
+#Last one will store absolute numbers of invasive species
+CFs_I <- data.table()
+CFs_I$Nums <- c(",1,|,2,|,3,|,4,",
+                                 ",5,|,6,|,7,|,8,",
+                                 ",9,|,10,|,11,|,12,|,13,|,14,|,15,|,16,|,17,",
+                                 ",18,|,19,|,20,|,21,|,22,|,23,|,24,|,25,|,26,|,27,|,28,|,29,",
+                                 ",30,|,31,")
+CFs_I$Climate <- c("To Tropical", "To Arid", "To Temperate", "To Continental", "To Polar")
+CFs_I$From_Tropical<- ""
+CFs_I$From_Arid<- ""
+CFs_I$From_Temperate<- ""
+CFs_I$From_Continental<- ""
+CFs_I$From_Polar<- ""
+```
+
+Climate Flows (Sources to Destinations)
+
+```{r}
+a <- c(1:5)
+b <- c(1:5)
+for (i in a) {
+
+#Pull out species native to ith climate  
+Natives <- full_climates[grep(paste(CFs[i,1]), full_climates$native_climates),]
+  
+for (j in b){
+#Pull out established species in ith climate (which are already native to ith climate)
+e_count <- nrow(Natives[grep(paste(CFs[j,1]), Natives$established_climates),])
+
+#Pull out invasive species in ith climate (which are already native to ith climate)
+i_count <- nrow(Natives[grep(paste(CFs[j,1]), Natives$invaded_climates),])
+
+#Do a little arithmetic
+CFs[j,i+2] <- as.numeric(paste(i_count/e_count))
+CFs_E[j,i+2] <- as.numeric(paste(e_count))
+CFs_I[j,i+2] <- as.numeric(paste(i_count))
+  
+}
+}
+rm(Natives)
+
+#Run these three lines if you removed islands above
+#CFs_NoI<- CFs
+#CFs_E_NoI<- CFs_E
+#CFs_I_NoI<- CFs_I
+
+#Run these three lines if you removed mainlands above
+#CFs_NoM<- CFs
+#CFs_E_NoM<- CFs_E
+#CFs_I_NoM<- CFs_I
+
+#Leave data tables with current names if you didn't remove anything. 
+#But, if you do all three versions, you have to do this one last. 
+```
+
+Plotting Climate Flows Results (Tile Plot)
+
+```{r}
+pcfd <- CFs[,-c(1)]
+pcfd$Climate <- factor(c("Tropical", "Arid", "Temperate", "Continental", "Polar"),
+                      levels=c("Tropical", "Arid", "Temperate", "Continental", "Polar"))
+pcfd$From_Tropical <- as.numeric(pcfd$From_Tropical)
+pcfd$From_Arid <- as.numeric(pcfd$From_Arid)
+pcfd$From_Temperate <- as.numeric(pcfd$From_Temperate)
+pcfd$From_Continental <- as.numeric(pcfd$From_Continental)
+pcfd$From_Polar <- as.numeric(pcfd$From_Polar)
+pcfd <- pcfd %>% mutate(across(where(is.numeric), round, digits=2))
+mpcfd <- melt(pcfd)
+
+m <- ggplot(mpcfd, aes(x=Climate, y=variable)) +
+        geom_tile(aes(fill=value, color=as.factor(Climate), width=0.7, height=0.7), linewidth=2) +
+        scale_fill_gradientn(colours=c("white", "red"), name = "Invasion Rate (%)") +
+        geom_text(aes(label=value))+
+        ylab("Source Climate") +
+        xlab("Recipient Climate") +
+        theme(axis.title.y = element_text(face="bold"),
+              axis.title.x = element_text(face="bold"),
+              legend.title = element_text(face="bold"))
+
+mm <- m + scale_color_manual(values=c("#0218a2", "#ffb703", "#f76f73", "#027fdc", "#07c4c5"), guide = 'none') +
+    scale_y_discrete(labels=c('Tropical', 'Arid', 'Temperate', 'Continental', 'Polar'))
+```
+
+Significance Testing for Climate Flows
+
+```{r}
+#Add absolute values to mpcfd
+CFs_E <- CFs_E[,-c(1)]
+CFs_I <- CFs_I[,-c(1)]
+
+CFs_E$Climate <- factor(c("Tropical", "Arid", "Temperate", "Continental", "Polar"),
+                      levels=c("Tropical", "Arid", "Temperate", "Continental", "Polar"))
+CFs_I$Climate <- factor(c("Tropical", "Arid", "Temperate", "Continental", "Polar"),
+                      levels=c("Tropical", "Arid", "Temperate", "Continental", "Polar"))
+
+CFs_E$From_Tropical <- as.numeric(CFs_E$From_Tropical)
+CFs_E$From_Arid <- as.numeric(CFs_E$From_Arid)
+CFs_E$From_Temperate <- as.numeric(CFs_E$From_Temperate)
+CFs_E$From_Continental <- as.numeric(CFs_E$From_Continental)
+CFs_E$From_Polar <- as.numeric(CFs_E$From_Polar)
+
+CFs_I$From_Tropical <- as.numeric(CFs_I$From_Tropical)
+CFs_I$From_Arid <- as.numeric(CFs_I$From_Arid)
+CFs_I$From_Temperate <- as.numeric(CFs_I$From_Temperate)
+CFs_I$From_Continental <- as.numeric(CFs_I$From_Continental)
+CFs_I$From_Polar <- as.numeric(CFs_I$From_Polar)
+
+m_CFs_E <- melt(CFs_E)
+m_CFs_I <- melt(CFs_I)
+
+st <- left_join(mpcfd, m_CFs_E, by=c("Climate"="Climate", "variable"="variable"))
+st <- rename(st, "Total_Species" ="value.y")
+
+st <- left_join(st, m_CFs_I, by=c("Climate"="Climate", "variable"="variable"))
+st<- rename(st, "Invasive_Species" ="value")
+
+#Are the proportions for each climate significantly different than each other?
+pairwise.prop.test(st$Invasive_Species, st$Total_Species, conf.level=0.95)
+```
