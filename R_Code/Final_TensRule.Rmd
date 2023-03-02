@@ -19,6 +19,35 @@ data <- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_
 
 ```
 
+Average range sizes (reported as the number of L3 regions included).
+```{r}
+#Size of average invaded range
+#avg_i <- separate_rows(data, Invasive_L3, sep=",")
+#avg_i <- avg_i[!(avg_i$Invasive_L3==""), ]
+#avg_i$point <- as.numeric(paste("1"))
+#avg_i <- avg_i %>%
+#    group_by(Accepted_name) %>% 
+#    summarise(sum = sum(point))
+#mean(avg_i$sum)
+#sd(avg_i$sum)
+
+#Size of average established range
+#avg_e <- separate_rows(data, Established_L3, sep=",")
+#avg_e <- avg_e[!(avg_e$Established_L3==""), ]
+#avg_e$point <- as.numeric(paste("1"))
+#avg_e <- avg_e %>%
+#    group_by(Accepted_name, status) %>% 
+#    summarise(sum = sum(point))
+
+#i_m <- avg_e[avg_e$status=="invasive",]
+#e_m <- avg_e[avg_e$status=="established",]
+
+#mean(i_m$sum)
+#sd(i_m$sum)
+#mean(e_m$sum)
+#sd(e_m$sum)
+```
+
 **WGSRPD Level 1 - Continents**
 
 Make a Data Table to Store continent Results
@@ -39,7 +68,7 @@ for (i in a) {
 Region_I <- data[grep(paste(AllContsDestinations[i,1] ), data$Invasive_L1),]
 
 #Remove species with Native L1 = whatever L1 region is in Row i 
-Region_I <- Region_I[-(grep(paste(AllContsDestinations[i,1]), Region_I$Native_L1)), ]
+Region_I <- Region_I[!(grep(paste(AllContsDestinations[i,1]), Region_I$Native_L1)), ]
 
 #Remove excess columns
 Region_I <- Region_I[,c(1)]
@@ -51,10 +80,10 @@ Region_I$type = "1"
 Region_E <- data[grep(paste(AllContsDestinations[i,1] ), data$Established_L1),]
 
 #Remove species with Native L1 = whatever L1 region is in Row i
-Region_E <- Region_E[-(grep(paste(AllContsDestinations[i,1]), Region_E$Native_L1)),]
+Region_E <- Region_E[!(grep(paste(AllContsDestinations[i,1]), Region_E$Native_L1)),]
 
 #Remove invasive species from our established list
-Region_E <-  Region_E[-(grep(paste(AllContsDestinations[i,1] ), Region_E$Invasive_L1)), ]
+Region_E <-  Region_E[!(grep(paste(AllContsDestinations[i,1] ), Region_E$Invasive_L1)), ]
 
 #Remove excess columns
 Region_E <- Region_E[,c(1)]
@@ -85,15 +114,19 @@ AllContsDestinations$InvasiveSpecies <- as.integer(AllContsDestinations$Invasive
 AllContsDestinations$Total <- (AllContsDestinations$EstablishedSpecies + AllContsDestinations$InvasiveSpecies)
 AllContsDestinations$InvasionRate <- (AllContsDestinations$InvasiveSpecies/AllContsDestinations$Total)
 
-#Remove Antarctica
-AllContsDestinations <- AllContsDestinations[-c(9),]
-
 #What's the average invasion rate for all continents?
+#This is different than what's reported in the manuscript because this excludes Antarctica. 
 mean(AllContsDestinations$InvasionRate)
 
 #Prepare data for plotting
 pd_1 <- AllContsDestinations[,c(1,6)]
 pd_1$Scale <- "L1"
+
+#Remove commas before exporting
+AllContsDestinations$Continent <- gsub(",", "", AllContsDestinations$Continent)
+
+#Export for mapping in ArcGIS Pro
+#fwrite(AllContsDestinations, "C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/ContsMappingData.csv")
 ```
 
 Compare L1 average to Tens Rule using T-Test
@@ -157,7 +190,7 @@ for (i in a) {
 Region_I <- data[grep(paste(All2Destinations[i,1] ), data$Invasive_L2),]
 
 #Remove species with Native L2 = whatever L2 region is in Row i 
-Region_I <- Region_I[-(grep(paste(All2Destinations[i,1]), Region_I$Native_L2)), ]
+Region_I <- Region_I[!(grep(paste(All2Destinations[i,1]), Region_I$Native_L2)), ]
 
 #Remove excess columns
 Region_I <- Region_I[,c(1)]
@@ -169,10 +202,10 @@ Region_I$type = "1"
 Region_E <- data[grep(paste(All2Destinations[i,1] ), data$Established_L2),]
 
 #Remove species with Native L2 = whatever L2 region is in Row i
-Region_E <- Region_E[-(grep(paste(All2Destinations[i,1]), Region_E$Native_L2)),]
+Region_E <- Region_E[!(grep(paste(All2Destinations[i,1]), Region_E$Native_L2)),]
 
 #Remove invasive species from our established list
-Region_E <-  Region_E[-(grep(paste(All2Destinations[i,1] ), Region_E$Invasive_L2)), ]
+Region_E <-  Region_E[!(grep(paste(All2Destinations[i,1] ), Region_E$Invasive_L2)), ]
 
 #Remove excess columns
 Region_E <- Region_E[,c(1)]
@@ -217,6 +250,12 @@ mean(All2Destinations$InvasionRate)
 #Prepare data for plotting
 pd_2 <- All2Destinations[,c(1,5)]
 pd_2$Scale <- "L2"
+
+#Remove commas before exporting
+All2Destinations$L2s <- gsub(",", "", All2Destinations$L2s)
+
+#Export for mapping in ArcGIS Pro
+#fwrite(All2Destinations, "C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/L2MappingData.csv")
 ```
 
 Compare L2 average to Tens Rule using T-Test
@@ -279,7 +318,7 @@ for (i in a) {
 Region_I <- data[grep(paste(All3Destinations[i,1] ), data$Invasive_L3),]
 
 #Remove species with Native L3 = whatever L3 region is in Row i 
-Region_I <- Region_I[-(grep(paste(All3Destinations[i,1]), Region_I$Native_L3)), ]
+Region_I <- Region_I[!(grep(paste(All3Destinations[i,1]), Region_I$Native_L3)), ]
 
 #Remove excess columns
 Region_I <- Region_I[,c(1)]
@@ -291,10 +330,10 @@ Region_I$type = "1"
 Region_E <- data[grep(paste(All3Destinations[i,1] ), data$Established_L3),]
 
 #Remove species with Native L3 = whatever L3 region is in Row i
-Region_E <- Region_E[-(grep(paste(All3Destinations[i,1]), Region_E$Native_L3)),]
+Region_E <- Region_E[!(grep(paste(All3Destinations[i,1]), Region_E$Native_L3)),]
 
 #Remove invasive species from our established list
-Region_E <-  Region_E[-(grep(paste(All3Destinations[i,1] ), Region_E$Invasive_L3)), ]
+Region_E <-  Region_E[!(grep(paste(All3Destinations[i,1] ), Region_E$Invasive_L3)), ]
 
 #Remove excess columns
 Region_E <- Region_E[,c(1)]
@@ -344,8 +383,7 @@ pd_3$Scale <- "L3"
 All3Destinations$L3s <- gsub(",", "", All3Destinations$L3s)
 
 #Export for mapping in ArcGIS Pro
-fwrite(All3Destinations, "C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/L3MappingData.csv")
-
+#fwrite(All3Destinations, "C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/L3MappingData.csv")
 ```
 
 Compare L3 average to Tens Rule using T-Test
@@ -412,7 +450,7 @@ for (i in a) {
 Region_I <- data[grep(paste(All4Destinations[i,1] ), data$Invasive_L4),]
 
 #Remove species with Native L4 = whatever L4 region is in Row i 
-Region_I <- Region_I[-(grep(paste(All4Destinations[i,1]), Region_I$Native_L4)), ]
+Region_I <- Region_I[!(grep(paste(All4Destinations[i,1]), Region_I$Native_L4)), ]
 
 #Remove excess columns
 Region_I <- Region_I[,c(1)]
@@ -424,10 +462,10 @@ Region_I$type = "1"
 Region_E <- data[grep(paste(All4Destinations[i,1] ), data$Established_L4),]
 
 #Remove species with Native L4 = whatever L4 region is in Row i
-Region_E <- Region_E[-(grep(paste(All4Destinations[i,1]), Region_E$Native_L4)),]
+Region_E <- Region_E[!(grep(paste(All4Destinations[i,1]), Region_E$Native_L4)),]
 
 #Remove invasive species from our established list
-Region_E <-  Region_E[-(grep(paste(All4Destinations[i,1] ), Region_E$Invasive_L4)), ]
+Region_E <-  Region_E[!(grep(paste(All4Destinations[i,1] ), Region_E$Invasive_L4)), ]
 
 #Remove excess columns
 Region_E <- Region_E[,c(1)]
@@ -472,6 +510,12 @@ mean(All4Destinations$InvasionRate)
 #Prepare data for plotting
 pd_4 <- All4Destinations[,c(1,5)]
 pd_4$Scale <- "L4"
+
+#Remove commas before exporting
+All4Destinations$L4s <- gsub(",", "", All4Destinations$L4s)
+
+#Export for mapping in ArcGIS Pro
+#fwrite(All4Destinations, "C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/L4MappingData.csv")
 ```
 
 Compare L4 average to Tens Rule using T-Test
@@ -483,6 +527,7 @@ test4
 ```
 
 **Confidence Interval Plot**
+Prepare data for plotting
 ```{r}
 #Rename columns for rbind
 pd_1 <- rename(pd_1, "Region" ="Continent")
@@ -496,6 +541,7 @@ pd <- rbind(pd, pd_3)
 pd <- rbind(pd, pd_4)
 
 #Attach p-values
+#These p-values came from objects test, test2, test3, test4
 pd$pv <-""
 pd <- setDT(pd)[Scale == "L1", pv:="2.4e-05"]
 pd <- setDT(pd)[Scale == "L2", pv:="2.4e-05"]
@@ -505,19 +551,63 @@ pd <- setDT(pd)[Scale == "L4", pv:="0.048"]
 #Attach sample sizes
 pd <- pd %>% 
   group_by(Scale) %>% mutate(n = n()) %>% 
-  mutate(label = paste0(Scale,'\nn = ',n,'\np = ',pv))
+  mutate(label = paste0(Scale))
+```
+
+Build and export plot (Fig. 1 Panel E)
+```{r}
+#Export plot
+tiff("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/Figures and Figure Data/TensRule/test.tiff",
+     units = "in",
+     width = 1.2671,
+     height = 3.321,
+     res = 800)
 
 #build plot
 g <- ggplot(pd, aes(x=`label`, y=`InvasionRate`, colour=`Scale`))+ 
-                stat_summary(geom="point", fun=mean, size= 3 ) +
-                stat_summary(geom="errorbar", fun.data=mean_cl_normal, width=0.1, linewidth=1) +
-                xlab("Scale (WGSRPD Level)") +
+                stat_summary(geom="point", fun=mean, size= 4 ) +
+                stat_summary(geom="errorbar", fun.data=mean_cl_normal, width=0.7, linewidth=1.5) +
+                coord_cartesian(ylim=c(0, 0.32),xlim = c(0.5,4.5), expand = FALSE, clip = "off") +
+                xlab("Scale") +
                 ylab("Invasion Rate (%)") +
-                coord_cartesian(ylim=c(0.05, 0.30)) +
-                theme(legend.position = "none") +
-                geom_hline(yintercept= 0.1, linetype="dashed", color = "black", linewidth=0.6)
+                theme_bw()+
+                theme(legend.position = "none",
+                       axis.text.x = (axis.text=element_text(size=9)),
+                       axis.text.y = (axis.text=element_text(size=9)), 
+                       axis.title.x = element_text(face="bold", size = 10),
+                       axis.title.y = element_text(face="bold", size = 10)) +
+                geom_hline(yintercept= 0.1, linetype="dashed", color = "black", linewidth=1)
 
 #View plot
-g
+g + scale_color_manual(values=c("#E7533A", "#FC8D59", "#FC8D59", "#FDC38D"))
+
+dev.off()
+```
+
+Significance Testing
+```{r}
+All2 <- All2Destinations[,c(1,5)]
+All2$Level <- "2"
+All2 <- All2[,-c(1)]
+
+All3 <- All3Destinations[,c(1,5)]
+All3$Level <- "3"
+All3 <- All3[,-c(1)]
+
+All4 <- All4Destinations[,c(1,5)]
+All4$Level <- "4"
+All4 <- All4[,-c(1)]
+
+All1 <- AllContsDestinations[,c(1,6)]
+All1$Level <- "1"
+All1 <- All1[,-c(1)]
+
+#Are the proportions for each level significantly different than each other?
+t.test(All1$InvasionRate, All2$InvasionRate) # ns
+t.test(All1$InvasionRate, All3$InvasionRate) # **
+t.test(All1$InvasionRate, All4$InvasionRate) # *** 
+t.test(All2$InvasionRate, All3$InvasionRate) # ns
+t.test(All2$InvasionRate, All4$InvasionRate) # **
+t.test(All3$InvasionRate, All4$InvasionRate) # **
 ```
 

@@ -1,0 +1,344 @@
+---
+title: "Final_Islands"
+author: "Will Pfadenhauer"
+date: "2023-01-11"
+output: html_document
+---
+
+Load data & packages
+```{r}
+require(data.table)
+require(dplyr)
+require(tidyr)
+require(ggplot2)
+require(PropCIs)
+require(forcats)
+require(scoringutils)
+require(Hmisc)
+require(svglite)
+
+#Load data
+data <- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/December_Database_Backup.csv")
+```
+
+## Islands vs. Mainlands at Global Scale
+
+```{r}
+#Expand L4 regions
+data_e <- separate_rows(data, Established_L4, sep = ",")
+data_i <- separate_rows(data, Invasive_L4, sep = ",")
+
+glonaf_tdwg <- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/Species_Lists/GloNAF/Region_GloNAF_vanKleunenetal2018Ecology.csv")
+
+extra_islands<- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/Island_Data/Extra_Islands.csv")
+
+glonaf_tdwg <- glonaf_tdwg[,-c(1:3,5,7:13)]
+glonaf_tdwg <- distinct(glonaf_tdwg, 
+                        tdwg4,
+                        .keep_all = TRUE)
+all_islands <- rbind(glonaf_tdwg, extra_islands)
+all_islands <- distinct(all_islands,
+                        tdwg4,
+                        .keep_all = TRUE)
+
+#Join regions to l4 regions from GloNAF
+data_e <-left_join(data_e, all_islands, by=c("Established_L4"="tdwg4")) 
+data_i <-left_join(data_i, all_islands, by=c("Invasive_L4"="tdwg4")) 
+
+#Remove mainlands.
+data_e_i <- data_e[!data_e$island=="0",]
+data_i_i <- data_i[!data_i$island=="0",]
+
+#Remove islands.
+data_e_m <- data_e[!data_e$island=="1",]
+data_i_m <- data_i[!data_i$island=="1",]
+
+#Remove duplicate species rows
+data_e_i <- distinct(data_e_i, Accepted_name, .keep_all = TRUE)
+data_i_i <- distinct(data_i_i, Accepted_name, .keep_all = TRUE)
+data_e_m <- distinct(data_e_m, Accepted_name, .keep_all = TRUE)
+data_i_m <- distinct(data_i_m, Accepted_name, .keep_all = TRUE) 
+
+rm(data_e)
+rm(data_i)
+rm(glonaf_tdwg)
+rm(all_islands)
+rm(extra_islands)
+```
+
+```{r}
+Global <- data.table(group = c("Islands", "Mainlands"), TotalSpecies = c("",""), InvasiveSpecies= c("",""))
+
+#Transfer results to data table
+Global[1,2] <- paste(nrow(data_e_i))
+Global[1,3] <- paste(nrow(data_i_i))
+Global[2,2] <- paste(nrow(data_e_m))
+Global[2,3] <- paste(nrow(data_i_m))  
+
+#Calculate Invasion Rate
+Global$InvasiveSpecies <- as.numeric(Global$InvasiveSpecies)
+Global$TotalSpecies <- as.numeric(Global$TotalSpecies)
+Global$InvasionRate <- (Global$InvasiveSpecies/Global$TotalSpecies)
+
+#Calculate Confidence intervals
+Global$CIMax <- ""
+Global$CIMin <- ""
+
+a <- c(1:2)
+for (i in a) {
+conf <- scoreci(as.integer(paste(Global[i,3])), as.integer(paste(Global[i,2])), conf.level = 0.95)
+Global[i,5] <- conf[1]$conf.int[2]
+Global[i,6] <- conf[1]$conf.int[1]
+}
+
+Global$CIMax <- as.numeric(Global$CIMax)
+Global$CIMin <- as.numeric(Global$CIMin)
+
+Global$scale <- "global"
+```
+
+## Islands vs. Mainlands at WGSRPD Level 3 Scale (Countries/States)
+
+```{r}
+#Need to create a list of all L3 regions
+#Expand L3 regions
+data_e <- separate_rows(data, Established_L3, sep = ",")
+data_i <- separate_rows(data, Invasive_L3, sep = ",")
+
+#remove extra columns
+data_e <- data_e[,c(1,9)]
+data_i <- data_i[,c(1,13)]
+
+#rename for matching
+data_e <- rename(data_e, "L3" ="Established_L3")
+data_i <- rename(data_i, "L3" ="Invasive_L3")
+
+#Combine all L3 regions
+full_l3 <-rbind(data_e, data_i)
+
+#Remove duplicates
+full_l3 <- distinct(full_l3,
+                    L3)
+
+#Sort by alphabetical order
+full_l3 <- full_l3[order(full_l3$L3),]
+
+#Remove weird rows
+full_l3 <- full_l3[-c(1),]
+```
+
+```{r}
+#Make a Data Table to Store L3 Results
+All3Destinations <- data.table()
+All3Destinations$L3s <- paste(",", full_l3$L3, ",", sep = "")
+All3Destinations$EstablishedSpecies <- ""
+All3Destinations$InvasiveSpecies <- ""
+```
+
+
+```{r}
+#Count established and invasive species for each L3 region
+a <- c(1:368)
+for (i in a) {
+  
+  #Need species with Invasive_L3 = whatever L3 region is in Row i
+  Region_I <- data[grep(paste(All3Destinations[i,1] ), data$Invasive_L3),]
+  
+  #Remove species with Native L3 = whatever L3 region is in Row i 
+  Region_I <- Region_I[-(grep(paste(All3Destinations[i,1]), Region_I$Native_L3)), ]
+  
+  #Remove excess columns
+  Region_I <- Region_I[,c(1)]
+  
+  #Label as invasive
+  Region_I$type = "1"
+  
+  #Need species with Established_L3 = whatever L3 region is in Row i
+  Region_E <- data[grep(paste(All3Destinations[i,1] ), data$Established_L3),]
+  
+  #Remove species with Native L3 = whatever L3 region is in Row i
+  Region_E <- Region_E[-(grep(paste(All3Destinations[i,1]), Region_E$Native_L3)),]
+  
+  #Remove invasive species from our established list
+  Region_E <-  Region_E[-(grep(paste(All3Destinations[i,1] ), Region_E$Invasive_L3)), ]
+  
+  #Remove excess columns
+  Region_E <- Region_E[,c(1)]
+  
+  #Label as established
+  Region_E$type = "0"
+  
+  #Rbind Invaders to Established 
+  Region <- rbind(Region_I, Region_E)
+  
+  Region_count <- table(Region$type)
+  
+  All3Destinations[i,2] <- paste(Region_count[1])
+  All3Destinations[i,3] <- paste(Region_count[2])
+  
+  message('Running Region ', i, ' of 368')
+  
+  rm(Region)
+  rm(Region_E)
+  rm(Region_I)
+  rm(Region_count)
+  
+}
+```
+
+```{r}
+#Remove NAs
+All3Destinations <- as.data.frame(All3Destinations)
+All3Destinations <- replace_with_na(All3Destinations, replace = list(EstablishedSpecies = c("NA")))
+All3Destinations <- replace_with_na(All3Destinations, replace = list(InvasiveSpecies = c("NA")))
+All3Destinations <- na.omit(All3Destinations)
+
+#Calculate Invasion Rates
+All3Destinations$EstablishedSpecies <- as.integer(All3Destinations$EstablishedSpecies)
+All3Destinations$InvasiveSpecies <- as.integer(All3Destinations$InvasiveSpecies)
+All3Destinations$Total <- (All3Destinations$EstablishedSpecies + All3Destinations$InvasiveSpecies)
+All3Destinations$InvasionRate <- (All3Destinations$InvasiveSpecies/All3Destinations$Total)
+All3Destinations$Weight <- All3Destinations$Total/12352
+
+#Prepare data for plotting
+pd_3 <- All3Destinations[,c(1,5,6)]
+pd_3$Scale <- "L3"
+
+#Load Island data
+glonaf_tdwg <- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/Species_Lists/GloNAF/Region_GloNAF_vanKleunenetal2018Ecology.csv")
+
+extra_islands<- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/Island_Data/Extra_Islands.csv")
+
+#Clean Island data
+extra_islands$tdwg4 <- gsub("-OO", "", extra_islands$tdwg4)
+extra_islands <- rename(extra_islands, "tdwg3" ="tdwg4")
+
+#Join the two islands lists
+glonaf_tdwg <- glonaf_tdwg[,-c(1:3,5:7,9:13)]
+glonaf_tdwg <- distinct(glonaf_tdwg, 
+                        tdwg3,
+                        .keep_all = TRUE)
+all_islands <- rbind(glonaf_tdwg, extra_islands)
+all_islands <- distinct(all_islands,
+                        tdwg3,
+                        .keep_all = TRUE)
+
+#Add commas so it will match pd_3
+all_islands$tdwg3 <- paste(",", all_islands$tdwg3, ",", sep = "")
+
+#Join L3 invasion rates to island data
+pd_3 <-left_join(pd_3, all_islands, by=c("L3s"="tdwg3")) 
+
+#Separate Islands and Mainlands
+pd_3_i <- pd_3[!pd_3$island =="0",]
+pd_3_m <- pd_3[!pd_3$island =="1",]  
+```
+
+```{r}
+#Weighted average for islands
+isl_w_mean<- (sum((pd_3_i$InvasionRate * pd_3_i$Weight)))/sum(pd_3_i$Weight)
+mld_w_mean <- (sum((pd_3_m$InvasionRate * pd_3_m$Weight)))/sum(pd_3_m$Weight)
+
+#Calculate confidence intervals for weighted averages
+weighted.ttest.ci <- function(x, weights, conf.level = 0.95) {
+    nx <- length(x)
+    df <- nx - 1
+    vx <- wtd.var(x, weights, normwt = TRUE) 
+    mx <- weighted.mean(x, weights)
+    stderr <- sqrt(vx/nx)
+    tstat <- mx/stderr 
+    alpha <- 1 - conf.level
+    cint <- qt(1 - alpha/2, df)
+    cint <- tstat + c(-cint, cint)
+    cint * stderr
+}
+
+#Calculate confidence intervals
+isl_w_conf <- weighted.ttest.ci(pd_3_i$InvasionRate, pd_3_i$Weight)
+mld_w_conf <- weighted.ttest.ci(pd_3_m$InvasionRate, pd_3_m$Weight)
+```
+
+```{r}
+#Island plot with both L3 and Global scales
+#Prepare data for plotting
+Global2<-Global
+Global <- rbind(Global,Global2)
+Global[3,] <- ""
+Global[4,] <- ""
+Global[3,1] <-"Islands"
+Global[4,1] <- "Mainlands"
+Global[3,4] <- isl_w_mean
+Global[3,5] <- isl_w_conf[2]
+Global[3,6] <- isl_w_conf[1]
+Global[3,7] <- "L3"
+Global[4,4] <- mld_w_mean
+Global[4,5] <- mld_w_conf[2]
+Global[4,6] <- mld_w_conf[1]
+Global[4,7] <- "L3"
+Global[1,7] <- "Global"
+Global[2,7] <- "Global"
+
+#Create labels
+Global$label <- paste(c("Global Islands",
+                        "Global Mainlands",
+                        "L3 Islands",
+                        "L3 Mainlands"))
+
+Global$label <- factor(Global$label, levels=unique(Global$label))
+```
+
+```{r}
+#Build Plot
+g <- ggplot(Global, aes(x= fct_inorder(`label`), y=`InvasionRate`, colour=`group`))+ 
+  stat_summary(geom="point", fun=mean, size= 5 ) +
+  ylab("Invasion Rate (%)") +
+  coord_cartesian(ylim=c(0, 0.25),xlim = c(0.5, 4.5), expand = FALSE, clip = "off") +
+  theme_bw() +
+  theme(legend.position = "none",
+        plot.margin = unit(c(1, 1, 3, 1), "lines"),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_text(face="bold", size = 14),
+        axis.text.y = element_text(size = 16)) +
+  geom_hline(yintercept= 0.1, linetype="dashed", color = "black", linewidth=2) +
+  geom_vline(aes(xintercept = 2.5)) +
+  annotate(geom = "text", x = seq_len(nrow(Global)), y = -0.01,
+           label = Global$group, size = 4.5) +
+  annotate(geom = "text", x = 1.5 + (2 * (0:1)), y = -0.02, label = unique(Global$scale),
+           size = 5, fontface = "bold")
+p <- g + 
+  geom_errorbar(aes(ymin = Global$CIMin, ymax = Global$CIMax), width = 0.3, linewidth =1.5) 
+```
+
+```{r}
+#Print plot
+svglite("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/Figures and Figure Data/Islands/islandwtd.svg",
+     width = 4.25,
+     height = 6.072917)
+
+p
+
+dev.off()
+```
+
+
+Significance Testing
+```{r}
+#Global scale comparison
+#Need to do a one-tailed test since the hypothesis is that islands are MORE susceptible than mainlands. 
+GST <- Global[c(1,2),]
+prop.test(GST$InvasiveSpecies, GST$TotalSpecies, alternative = c("greater"), conf.level=0.95)
+
+#WGSRPD Level 3 scale comparison
+L3STI <- pd_3[pd_3$island =="1",]
+L3STM <- pd_3[pd_3$island =="0",]
+
+wtd.t.test(L3STI$InvasionRate,
+           L3STM$InvasionRate, 
+           weight = L3STI$Weight, 
+           weighty = L3STM$Weight,
+           samedata = FALSE,
+           alternative = "greater")
+```
+
+
