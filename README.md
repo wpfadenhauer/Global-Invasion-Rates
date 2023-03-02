@@ -33,4 +33,13 @@ __Raw Data Files:__
 
 <br/><br/>
 __R Code Files:__ 
+1. Final_TensRule.Rmd
+    * Calculates average invasion rates at L1-L4 scales, along with corresponding confidence intervals and significance testing. (Data for Figure 1 in the manuscript). 
 
+2. Final_Islands.Rmd
+    * Calculates average invasion rates for islands and mainlands at the global scale and L3 scale, along with corresponding confidence intervals and significance testing. (Data for Figure 2 in the manuscript).
+
+3. Final_Climates.Rmd
+    * Alters December_Database_Backup.csv to become January_Climate_Overlaps_Removed_Backup.csv. 
+    * Calculates average invasion rates for the 5 major Köppen climates (Tropical, Arid, Temperate, Continental, Polar) as well as islands and mainlands within each of those 5 major climates (data for Figure 3 in the manuscript). Also includes the corresponding confidence intervals and significance testing for this data. 
+    * Calculates invasion rates for "climate flows" (data for Supplemental Figure S1 in the manuscript). 
