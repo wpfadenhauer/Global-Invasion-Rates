@@ -12,7 +12,7 @@ __Raw Data Files:__
     * The following columns will be empty for all established species: Invasive_L1, Invasive_L2, Invasive L3, Invasive L4. 
     * L1, L2, L3, and L4 codes are from WGSRPD. See their GitHub (https://github.com/tdwg/wgsrpd) and Wikipedia (https://en.wikipedia.org/wiki/List_of_codes_used_in_the_World_Geographical_Scheme_for_Recording_Plant_Distributions) for more information. 
     * Plant records at finer spatial scales have been converted to their corresponding coarser scales for completeness. For example, species reported as invasive in the state of Massachusetts, U.S.A. (column Invasive_L3 = MAS) were also recorded as invasive in the Northeastern U.S.A. (column Invasive_L2 = 75) and Northern America (column Invasive_L1 = 7). 
-    * Since some data was only available at the country or continental level, our this database includes the most information at the L1 (continental) scale and the least information at the L4 (province/state) scale. 
+    * Since some data was only available at the country or continental level, this database includes the most information at the L1 (continental) scale and the least information at the L4 (province/state) scale. 
 
 2. Extra_Islands.csv
     * For most of the L3 and L4 regions included in December_Database_Backup.csv, we used the "island" or "not island" labels used by GloNAF. The L3 and L4 regions in this file are not included in GloNAF, so we assigned these "island"/"not island" labels manually based on individual searches of each location. 
