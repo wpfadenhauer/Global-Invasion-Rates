@@ -27,7 +27,10 @@ __Raw Data Files:__
     * Numbers in "MAJORITY" column correspond to the following Köppen climates: 1 = Af, 2 = Am, 3 = As, 4 = Aw, 5 = BWk, 6 = BWh, 7 = BSk, 8 = BSh, 9 = Cfa, 10 = Cfb, 11= Cfc, 12 = Csa, 13 = Csb, 14 = Csc, 15 = Cwa, 16 = Cwb, 17 = Cwc, 18 = Dfa, 19 = Dfb, 20 = Dfc, 21 = Dfd, 22 = Dsa, 23 = Dsb, 24 = Dsc, 25 = Dsd, 26 = Dwa, 27 = Dwb, 28 = Dwc, 29 = Dwd, 30 = EF, 31 = ET, 32 = Ocean/Water.
 
 5. L4_Better_Climate_data.csv
-    * Same as L3_Better_Climate_Data.csv except for L4 regions instead of L3 regions. 
+    * Same as L3_Better_Climate_Data.csv except for L4 regions instead of L3 regions.
+  
+6. Table1_Codes_R.csv
+    * Has all relevant L2, L3, and L4 codes classified into their respective climates and whether they are islands or mainlands. This file is used in Table1.Rmd (below). 
 
 
 
@@ -42,4 +45,7 @@ __R Code Files:__
 3. Final_Climates.Rmd
     * Alters December_Database_Backup.csv to become January_Climate_Overlaps_Removed_Backup.csv. 
     * Calculates average invasion rates for the 5 major Köppen climates (Tropical, Arid, Temperate, Continental, Polar) as well as islands and mainlands within each of those 5 major climates (data for Figure 3 in the manuscript). Also includes the corresponding confidence intervals and significance testing for this data. 
-    * Calculates invasion rates for "climate flows" (data for Supplemental Figure S1 in the manuscript). 
+    * Calculates invasion rates for "climate flows" (data for Supplemental Figure S1 in the manuscript).
+  
+2. Table1.Rmd
+    * Calculates all the numbers found in Table 1 in the manuscript.
