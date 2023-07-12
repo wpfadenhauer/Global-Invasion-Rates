@@ -1,6 +1,6 @@
 # Global Invasion Rates
 
-The following files include the raw data and R code used in the "Twenties Rule" manuscript (URL/DOI to be updated once manuscript is published). 
+The following files include the raw data and R code used in the "Global Invasion Rates" manuscript (URL/DOI to be updated once manuscript is published). 
 Please reach out if you have any questions about content or organization in this repo. 
 
 <br/><br/>
