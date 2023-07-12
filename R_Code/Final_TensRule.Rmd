@@ -117,6 +117,8 @@ AllContsDestinations$InvasionRate <- (AllContsDestinations$InvasiveSpecies/AllCo
 #What's the average invasion rate for all continents?
 #This is different than what's reported in the manuscript because this excludes Antarctica. 
 mean(AllContsDestinations$InvasionRate)
+median(AllContsDestinations$InvasionRate)
+hist(AllContsDestinations$InvasionRate)
 
 #Prepare data for plotting
 pd_1 <- AllContsDestinations[,c(1,6)]
@@ -129,12 +131,26 @@ AllContsDestinations$Continent <- gsub(",", "", AllContsDestinations$Continent)
 #fwrite(AllContsDestinations, "C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/ContsMappingData.csv")
 ```
 
-Compare L1 average to Tens Rule using T-Test
+Compare L1 average to Tens Rule (Significance Testing)
 ```{r}
 test <- t.test(AllContsDestinations$InvasionRate,
   mu = 0.10)
-
 test
+#T-test says L1 average is significantly greater than 10%.
+
+test1 <- t.test(AllContsDestinations$InvasionRate,
+  mu = 0.20)
+test1
+#T-test says L1 average is significantly different than 20%.
+
+#Wilcoxon test
+test1mw <- wilcox.test(AllContsDestinations$InvasionRate, alternative = "greater", mu = 0.10)
+test1mw
+#Even one-sided, nonparametric test agrees that L1 average is significantly greater than 10%.
+
+test1tr <- wilcox.test(AllContsDestinations$InvasionRate, alternative = "greater", mu = 0.20)
+test1tr
+#Even one-sided, nonparametric test agrees that L1 average is significantly greater than 20%.
 ```
 I recommend removing all objects except pd_1 from workspace and reloading the first code chunk at the top before proceeding to L2 regions. 
 
@@ -142,6 +158,9 @@ I recommend removing all objects except pd_1 from workspace and reloading the fi
 
 Need to create a list of all L2 regions
 ```{r}
+#Reload data just to be safe
+data <- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/December_Database_Backup.csv")
+
 #Expand L4 regions
 data_e <- separate_rows(data, Established_L2, sep = ",")
 data_i <- separate_rows(data, Invasive_L2, sep = ",")
@@ -246,6 +265,8 @@ All2Destinations$InvasionRate <- (All2Destinations$InvasiveSpecies/All2Destinati
 
 #What's the average invasion rate for all L2 regions?
 mean(All2Destinations$InvasionRate)
+median(All2Destinations$InvasionRate)
+hist(All2Destinations$InvasionRate)
 
 #Prepare data for plotting
 pd_2 <- All2Destinations[,c(1,5)]
@@ -258,12 +279,26 @@ All2Destinations$L2s <- gsub(",", "", All2Destinations$L2s)
 #fwrite(All2Destinations, "C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/L2MappingData.csv")
 ```
 
-Compare L2 average to Tens Rule using T-Test
+Compare L2 average to Tens Rule (Significance Testing)
 ```{r}
 test2 <- t.test(All2Destinations$InvasionRate,
   mu = 0.10)
-
 test2
+#T-test says L2 average is significantly greater than 10%.
+
+test22 <- t.test(All2Destinations$InvasionRate,
+  mu = 0.20)
+test22
+#T-test says L2 average is not significantly different than 20%.
+
+#Wilcoxon test
+test2mw <- wilcox.test(All2Destinations$InvasionRate, alternative = "greater", mu = 0.10)
+test2mw
+#Even one-sided, nonparametric test agrees that L2 average is significantly greater than 10%.
+
+test2tr <- wilcox.test(All2Destinations$InvasionRate, mu = 0.20)
+test2tr
+#Nonparametric test agrees that L2 average is not significantly different than 20%.
 ```
 I recommend removing all objects except pd_1 and pd_2 from workspace and reloading the first code chunk at the top before proceeding to L3 regions. 
 
@@ -271,6 +306,9 @@ I recommend removing all objects except pd_1 and pd_2 from workspace and reloadi
 
 Need to create a list of all L3 regions
 ```{r}
+#Reload data just to be safe
+data <- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/December_Database_Backup.csv")
+
 #Expand L3 regions
 data_e <- separate_rows(data, Established_L3, sep = ",")
 data_i <- separate_rows(data, Invasive_L3, sep = ",")
@@ -374,6 +412,8 @@ All3Destinations$InvasionRate <- (All3Destinations$InvasiveSpecies/All3Destinati
 
 #What's the average invasion rate for all L3 regions?
 mean(All3Destinations$InvasionRate)
+median(All3Destinations$InvasionRate)
+hist(All3Destinations$InvasionRate)
 
 #Prepare data for plotting
 pd_3 <- All3Destinations[,c(1,5)]
@@ -386,20 +426,36 @@ All3Destinations$L3s <- gsub(",", "", All3Destinations$L3s)
 #fwrite(All3Destinations, "C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/L3MappingData.csv")
 ```
 
-Compare L3 average to Tens Rule using T-Test
+Compare L3 average to Tens Rule (Significance Testing)
 ```{r}
-test3 <- t.test(All3Destinations$InvasionRate,
-  mu = 0.10)
-
+test3 <- t.test(All3Destinations$InvasionRate, mu = 0.10)
 test3
+#T-test says L3 average is significantly different than 10%.
+
+test33 <- t.test(All3Destinations$InvasionRate, alternative = "less", mu = 0.20)
+test33
+#T-test says L3 average is significantly less than 20%.
+
+
+#Wilcoxon test
+test3mw <- wilcox.test(All3Destinations$InvasionRate, alternative = "greater", mu = 0.10)
+test3mw
+#Even one-sided, nonparametric test agrees that L3 average is significantly greater than 10%.
+
+test3tr <- wilcox.test(All3Destinations$InvasionRate, alternative = "less", mu = 0.20)
+test3tr
+#Nonparametric test agrees that L3 values are significantly lower than 20%. 
 ```
 I recommend removing all objects except pd_1, pd_2, and pd_3 from workspace and reloading the first code chunk at the top before proceeding to L4 regions. 
 
 
 **WGSRPD Level 4 - Small Countries/ States**
 
-Need to create a list of all L3 regions
+Need to create a list of all L4 regions
 ```{r}
+#Reload data just to be safe
+data <- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/December_Database_Backup.csv")
+
 #Expand L4 regions
 data_e <- separate_rows(data, Established_L4, sep = ",")
 data_i <- separate_rows(data, Invasive_L4, sep = ",")
@@ -506,6 +562,8 @@ All4Destinations$InvasionRate <- (All4Destinations$InvasiveSpecies/All4Destinati
 
 #What's the average invasion rate for all L4 regions?
 mean(All4Destinations$InvasionRate)
+median(All4Destinations$InvasionRate)
+hist(All4Destinations$InvasionRate)
 
 #Prepare data for plotting
 pd_4 <- All4Destinations[,c(1,5)]
@@ -518,12 +576,17 @@ All4Destinations$L4s <- gsub(",", "", All4Destinations$L4s)
 #fwrite(All4Destinations, "C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/L4MappingData.csv")
 ```
 
-Compare L4 average to Tens Rule using T-Test
+Compare L4 average to Tens Rule (Significance Testing)
 ```{r}
-test4 <- t.test(All4Destinations$InvasionRate,
-  mu = 0.10)
-
+test4 <- t.test(All4Destinations$InvasionRate, mu = 0.10)
 test4
+#T-test says L4 average is not significantly different than 10%.
+
+#Wilcoxon test
+test4mw <- wilcox.test(All4Destinations$InvasionRate, alternative = "less", mu = 0.10)
+test4mw
+# This is the only time the nonparametric test disagrees with the t-test.
+# Nonparametric test thinks L4 average is significantly less than 10%. 
 ```
 
 **Confidence Interval Plot**
@@ -609,5 +672,18 @@ t.test(All1$InvasionRate, All4$InvasionRate) # ***
 t.test(All2$InvasionRate, All3$InvasionRate) # ns
 t.test(All2$InvasionRate, All4$InvasionRate) # **
 t.test(All3$InvasionRate, All4$InvasionRate) # **
+
+#Non-parametric way of doing the same thing: Wilcoxon test across scales
+pairwise.wilcox.test(pd$InvasionRate, pd$Scale, p.adjust.method = "bonferroni")
+
+#Both tests agree that 1 and 2 are not significant.
+#t-test thinks 2-3 is not significant, wilcoxon thinks it is.
+#Both tests agree the remaining combinations are significant. 
+
+#Boxplot of invasion rate by scale. 
+boxplot(InvasionRate~Scale, data = pd)
+ abline(h=0.1, col="red", lwd=2)
+#Here, the medians look closer to 10%, but the means we calculated/plotted above seem to be better visualizations of the significance testing results.
+#This is why Table 1 is important - it breaks down these invasion rate by island/mainland, scale, and climate, which gives a much better view of the variation at each scale. See Table1.Rmd (in the same GitHub repo) for that data. 
 ```
 

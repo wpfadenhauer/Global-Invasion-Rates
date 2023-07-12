@@ -17,6 +17,7 @@ require(ggplot2)
 require(forcats)
 require(scoringutils)
 require(svglite)
+require(PropCIs)
 
 #Load data
 data <- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/December_Database_Backup.csv")
@@ -342,7 +343,7 @@ ClimatesAsDestinations$InvasionRate <- (ClimatesAsDestinations$InvasiveSpecies/C
 
 #Run this - or not - depending on whether you removed islands earlier
 #NoI_ClimatesAsDestinations <- ClimatesAsDestinations
-#NoM_ClimatesAsDestinations <- ClimatesAsDestinations
+NoM_ClimatesAsDestinations <- ClimatesAsDestinations
 
 ```
 Return to 2A and rerun all of these chunks again for No Mainlands, then No Islands, then All Data (nothing removed).
@@ -448,8 +449,15 @@ dev.off()
 
 E. Significance Testing for Point Plot
 ```{r}
+pd6 <- pd[2:6,]
+pd12 <- pd[8:12,]
+pd18<- pd[14:18,]
+
 #Are the proportions for each climate significantly different than each other?
-pairwise.prop.test(pd$InvasiveSpecies, pd$Total, conf.level=0.95)
+pairwise.prop.test(pd6$InvasiveSpecies, pd6$Total, conf.level=0.95, p.adjust.method = "bonferroni")
+pairwise.prop.test(pd12$InvasiveSpecies, pd12$Total, conf.level=0.95, p.adjust.method = "bonferroni")
+pairwise.prop.test(pd18$InvasiveSpecies, pd18$Total, conf.level=0.95, p.adjust.method = "bonferroni")
+
 ```
 
 ## 4. Climate Flows Results

@@ -68,23 +68,23 @@ clipr::write_clip(l3_pol_isl$tdwg4)
 ```{r}
 step2main <- check[grep("0", check$island), ]
   
-#2A Tropical mainand list
+#2A Tropical mainland list
 l3_trop_main <- step2main[(step2main$MAJORITY < 4.5), ]
 clipr::write_clip(l3_trop_main$tdwg4)     
 
-#2B Arid mainand list
+#2B Arid mainland list
 l3_arid_main <- step2main[(step2main$MAJORITY > 4.5 & step2main$MAJORITY < 8.5 ), ]
 clipr::write_clip(l3_arid_main$tdwg4)   
 
-#2C Temperate mainand list
+#2C Temperate mainland list
 l3_temp_main <- step2main[(step2main$MAJORITY > 8.5 & step2main$MAJORITY < 17.5 ), ]
 clipr::write_clip(l3_temp_main$tdwg4) 
 
-#2D Continental mainand list
+#2D Continental mainland list
 l3_cont_main <- step2main[(step2main$MAJORITY > 17.5 & step2main$MAJORITY < 29.5 ), ]
 clipr::write_clip(l3_cont_main$tdwg4) 
 
-#2E Polar mainand list
+#2E Polar mainland list
 l3_pol_main <- step2main[(step2main$MAJORITY > 29.5), ]
 clipr::write_clip(l3_pol_main$tdwg4) 
 
@@ -143,23 +143,23 @@ clipr::write_clip(l4_pol_isl$tdwg4)
 ```{r}
 step3main <- check[grep("0", check$island), ]
   
-#2A Tropical mainand list
+#2A Tropical mainland list
 l4_trop_main <- step3main[(step3main$MAJORITY < 4.5), ]
 clipr::write_clip(l4_trop_main$tdwg4)     
 
-#2B Arid mainand list
+#2B Arid mainland list
 l4_arid_main <- step3main[(step3main$MAJORITY > 4.5 & step3main$MAJORITY < 8.5 ), ]
 clipr::write_clip(l4_arid_main$tdwg4)   
 
-#2C Temperate mainand list
+#2C Temperate mainland list
 l4_temp_main <- step3main[(step3main$MAJORITY > 8.5 & step3main$MAJORITY < 17.5 ), ]
 clipr::write_clip(l4_temp_main$tdwg4) 
 
-#2D Continental mainand list
+#2D Continental mainland list
 l4_cont_main <- step3main[(step3main$MAJORITY > 17.5 & step3main$MAJORITY < 29.5 ), ]
 clipr::write_clip(l4_cont_main$tdwg4) 
 
-#2E Polar mainand list
+#2E Polar mainland list
 l4_pol_main <- step3main[(step3main$MAJORITY > 29.5), ]
 clipr::write_clip(l4_pol_main$tdwg4) 
 ```

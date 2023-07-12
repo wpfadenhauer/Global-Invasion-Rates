@@ -16,6 +16,7 @@ require(forcats)
 require(scoringutils)
 require(Hmisc)
 require(svglite)
+require(naniar)
 
 #Load data
 data <- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/December_Database_Backup.csv")
@@ -235,9 +236,17 @@ pd_3_m <- pd_3[!pd_3$island =="1",]
 ```
 
 ```{r}
+#Check data
+hist(pd_3_i$InvasionRate)
+hist(pd_3_m$InvasionRate)
+
 #Weighted average for islands
 isl_w_mean<- (sum((pd_3_i$InvasionRate * pd_3_i$Weight)))/sum(pd_3_i$Weight)
 mld_w_mean <- (sum((pd_3_m$InvasionRate * pd_3_m$Weight)))/sum(pd_3_m$Weight)
+
+median(pd_3_i$InvasionRate)
+median(pd_3_m$InvasionRate)
+#The weighted means and the medians are pretty darn close. 
 
 #Calculate confidence intervals for weighted averages
 weighted.ttest.ci <- function(x, weights, conf.level = 0.95) {
