@@ -35,36 +35,95 @@ all_islands <- distinct(all_islands,
 
 #Append climates to L3 island list
 check <- left_join(all_islands, L3_clim, by=c("tdwg4"="LEVEL3_COD"))
+
+#Remove column that will be a duplicate once we load in more island data
+check <- check[,-c(1)]
+
+#Need to append continental/oceanic island status
+island_geos <- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/Island_Data/Islands_WITH_oceanic_continental_classes.csv")
+
+check <- left_join(check, island_geos, by=c("tdwg4"="tdwg4"))
 ```
 
 
-2A. L3 Islands 
+2A. L3 ALL Islands 
 ```{r}
-step2isl <- check[grep("1", check$island), ]
+step2isl_all <- check[grep("1", check$island), ]
   
-#2A Tropical Island list
-l3_trop_isl <- step2isl[(step2isl$MAJORITY < 4.5), ]
-clipr::write_clip(l3_trop_isl$tdwg4)     
+#2A Tropical island list
+l3_trop_isl_all <- step2isl_all[(step2isl_all$MAJORITY < 4.5), ]
+clipr::write_clip(l3_trop_isl_all$tdwg4)     
 
-#2B Arid Island list
-l3_arid_isl <- step2isl[(step2isl$MAJORITY > 4.5 & step2isl$MAJORITY < 8.5 ), ]
-clipr::write_clip(l3_arid_isl$tdwg4)   
+#2B Arid island list
+l3_arid_isl_all <- step2isl_all[(step2isl_all$MAJORITY > 4.5 & step2isl_all$MAJORITY < 8.5 ), ]
+clipr::write_clip(l3_arid_isl_all$tdwg4)   
 
-#2C Temperate Island list
-l3_temp_isl <- step2isl[(step2isl$MAJORITY > 8.5 & step2isl$MAJORITY < 17.5 ), ]
-clipr::write_clip(l3_temp_isl$tdwg4) 
+#2C Temperate island list
+l3_temp_isl_all <- step2isl_all[(step2isl_all$MAJORITY > 8.5 & step2isl_all$MAJORITY < 17.5 ), ]
+clipr::write_clip(l3_temp_isl_all$tdwg4) 
 
-#2D Continental Island list
-l3_cont_isl <- step2isl[(step2isl$MAJORITY > 17.5 & step2isl$MAJORITY < 29.5 ), ]
-clipr::write_clip(l3_cont_isl$tdwg4) 
+#2D Continental island list
+l3_cont_isl_all <- step2isl_all[(step2isl_all$MAJORITY > 17.5 & step2isl_all$MAJORITY < 29.5 ), ]
+clipr::write_clip(l3_cont_isl_all$tdwg4) 
 
-#2E Polar Island list
-l3_pol_isl <- step2isl[(step2isl$MAJORITY > 29.5), ]
-clipr::write_clip(l3_pol_isl$tdwg4) 
+#2E Polar island list
+l3_pol_isl_all <- step2isl_all[(step2isl_all$MAJORITY > 29.5), ]
+clipr::write_clip(l3_pol_isl_all$tdwg4) 
 
 ```
 
-2B. L3 Mainlands 
+2B. L3 OCEANIC Islands
+```{r}
+step2isl_oce <- step2isl_all[grep("Oceanic", step2isl_all$geo), ]
+  
+#2A Tropical oceanic island list
+l3_trop_isl_oce <- step2isl_oce[(step2isl_oce$MAJORITY < 4.5), ]
+clipr::write_clip(l3_trop_isl_oce$tdwg4)     
+
+#2B Arid oceanic island list
+l3_arid_isl_oce <- step2isl_oce[(step2isl_oce$MAJORITY > 4.5 & step2isl_oce$MAJORITY < 8.5 ), ]
+clipr::write_clip(l3_arid_isl_oce$tdwg4)   
+
+#2C Temperate oceanic island list
+l3_temp_isl_oce <- step2isl_oce[(step2isl_oce$MAJORITY > 8.5 & step2isl_oce$MAJORITY < 17.5 ), ]
+clipr::write_clip(l3_temp_isl_oce$tdwg4) 
+
+#2D Continental oceanic island list
+l3_cont_isl_oce <- step2isl_oce[(step2isl_oce$MAJORITY > 17.5 & step2isl_oce$MAJORITY < 29.5 ), ]
+clipr::write_clip(l3_cont_isl_oce$tdwg4) 
+
+#2E Polar oceanic island list
+l3_pol_isl_oce <- step2isl_oce[(step2isl_oce$MAJORITY > 29.5), ]
+clipr::write_clip(l3_pol_isl_oce$tdwg4) 
+```
+
+2C. L3 CONTINENTAL Islands
+```{r}
+step2isl_cont <- step2isl_all[grep("Continental", step2isl_all$geo), ]
+  
+#2A Tropical continental island list
+l3_trop_isl_cont <- step2isl_cont[(step2isl_cont$MAJORITY < 4.5), ]
+clipr::write_clip(l3_trop_isl_cont$tdwg4)     
+
+#2B Arid continental island list
+l3_arid_isl_cont <- step2isl_cont[(step2isl_cont$MAJORITY > 4.5 & step2isl_cont$MAJORITY < 8.5 ), ]
+clipr::write_clip(l3_arid_isl_cont$tdwg4)   
+
+#2C Temperate continental island list
+l3_temp_isl_cont <- step2isl_cont[(step2isl_cont$MAJORITY > 8.5 & step2isl_cont$MAJORITY < 17.5 ), ]
+clipr::write_clip(l3_temp_isl_cont$tdwg4) 
+
+#2D Continental continental island list
+l3_cont_isl_cont <- step2isl_cont[(step2isl_cont$MAJORITY > 17.5 & step2isl_cont$MAJORITY < 29.5 ), ]
+clipr::write_clip(l3_cont_isl_cont$tdwg4) 
+
+#2E Polar continental island list
+l3_pol_isl_cont <- step2isl_cont[(step2isl_cont$MAJORITY > 29.5), ]
+clipr::write_clip(l3_pol_isl_cont$tdwg4) 
+```
+
+
+2D. L3 Mainlands 
 ```{r}
 step2main <- check[grep("0", check$island), ]
   
@@ -110,36 +169,95 @@ all_islands <- all_islands[-grep("000", all_islands$tdwg4), ]
 
 #Append climates to L3 island list
 check <- left_join(all_islands, L4_clim, by=c("tdwg4"="Level4_cod"))
+
+#Remove column that will be a duplicate once we load in more island data
+check <- check[,-c(1)]
+
+#Need to append continental/oceanic island status
+island_geos <- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/Island_Data/Islands_WITH_oceanic_continental_classes.csv")
+
+check <- left_join(check, island_geos, by=c("tdwg4"="tdwg4"))
+
 ```
 
 
-3A. L4 Islands
+3A. L4 ALL Islands
 ```{r}
-step3isl <- check[grep("1", check$island), ]
+step3isl_all <- check[grep("1", check$island), ]
   
 #2A Tropical Island list
-l4_trop_isl <- step3isl[(step3isl$MAJORITY < 4.5), ]
-clipr::write_clip(l4_trop_isl$tdwg4)     
+l4_trop_isl_all <- step3isl_all[(step3isl_all$MAJORITY < 4.5), ]
+clipr::write_clip(l4_trop_isl_all$tdwg4)     
 
 #2B Arid Island list
-l4_arid_isl <- step3isl[(step3isl$MAJORITY > 4.5 & step3isl$MAJORITY < 8.5 ), ]
-clipr::write_clip(l4_arid_isl$tdwg4)   
+l4_arid_isl_all <- step3isl_all[(step3isl_all$MAJORITY > 4.5 & step3isl_all$MAJORITY < 8.5 ), ]
+clipr::write_clip(l4_arid_isl_all$tdwg4)   
 
 #2C Temperate Island list
-l4_temp_isl <- step3isl[(step3isl$MAJORITY > 8.5 & step3isl$MAJORITY < 17.5 ), ]
-clipr::write_clip(l4_temp_isl$tdwg4) 
+l4_temp_isl_all <- step3isl_all[(step3isl_all$MAJORITY > 8.5 & step3isl_all$MAJORITY < 17.5 ), ]
+clipr::write_clip(l4_temp_isl_all$tdwg4) 
 
 #2D Continental Island list
-l4_cont_isl <- step3isl[(step3isl$MAJORITY > 17.5 & step3isl$MAJORITY < 29.5 ), ]
-clipr::write_clip(l4_cont_isl$tdwg4) 
+l4_cont_isl_all <- step3isl_all[(step3isl_all$MAJORITY > 17.5 & step3isl_all$MAJORITY < 29.5 ), ]
+clipr::write_clip(l4_cont_isl_all$tdwg4) 
 
 #2E Polar Island list
-l4_pol_isl <- step3isl[(step3isl$MAJORITY > 29.5), ]
-clipr::write_clip(l4_pol_isl$tdwg4) 
+l4_pol_isl_all <- step3isl_all[(step3isl_all$MAJORITY > 29.5), ]
+clipr::write_clip(l4_pol_isl_all$tdwg4) 
 
 ```
 
-3B. L4 Mainlands
+3B. L4 OCEANIC Islands
+```{r}
+step3isl_oce <- step3isl_all[grep("Oceanic", step3isl_all$geo), ]
+  
+#3A Tropical oceanic island list
+l4_trop_isl_oce <- step3isl_oce[(step3isl_oce$MAJORITY < 4.5), ]
+clipr::write_clip(l4_trop_isl_oce$tdwg4)     
+
+#3B Arid oceanic island list
+l4_arid_isl_oce <- step3isl_oce[(step3isl_oce$MAJORITY > 4.5 & step3isl_oce$MAJORITY < 8.5 ), ]
+clipr::write_clip(l4_arid_isl_oce$tdwg4)   
+
+#3C Temperate oceanic island list
+l4_temp_isl_oce <- step3isl_oce[(step3isl_oce$MAJORITY > 8.5 & step3isl_oce$MAJORITY < 17.5 ), ]
+clipr::write_clip(l4_temp_isl_oce$tdwg4) 
+
+#3D Continental oceanic island list
+l4_cont_isl_oce <- step3isl_oce[(step3isl_oce$MAJORITY > 17.5 & step3isl_oce$MAJORITY < 29.5 ), ]
+clipr::write_clip(l4_cont_isl_oce$tdwg4) 
+
+#3E Polar oceanic island list
+l4_pol_isl_oce <- step3isl_oce[(step3isl_oce$MAJORITY > 29.5), ]
+clipr::write_clip(l4_pol_isl_oce$tdwg4) 
+```
+
+3C. L4 CONTINENTAL Islands
+```{r}
+step3isl_cont <- step3isl_all[grep("Continental", step3isl_all$geo), ]
+  
+#3A Tropical oceanic island list
+l4_trop_isl_cont <- step3isl_cont[(step3isl_cont$MAJORITY < 4.5), ]
+clipr::write_clip(l4_trop_isl_cont$tdwg4)     
+
+#3B Arid oceanic island list
+l4_arid_isl_cont <- step3isl_cont[(step3isl_cont$MAJORITY > 4.5 & step3isl_cont$MAJORITY < 8.5 ), ]
+clipr::write_clip(l4_arid_isl_cont$tdwg4)   
+
+#3C Temperate oceanic island list
+l4_temp_isl_cont <- step3isl_cont[(step3isl_cont$MAJORITY > 8.5 & step3isl_cont$MAJORITY < 17.5 ), ]
+clipr::write_clip(l4_temp_isl_cont$tdwg4) 
+
+#3D Continental oceanic island list
+l4_cont_isl_cont <- step3isl_cont[(step3isl_cont$MAJORITY > 17.5 & step3isl_cont$MAJORITY < 29.5 ), ]
+clipr::write_clip(l4_cont_isl_cont$tdwg4) 
+
+#3E Polar oceanic island list
+l4_pol_isl_cont <- step3isl_cont[(step3isl_cont$MAJORITY > 29.5), ]
+clipr::write_clip(l4_pol_isl_cont$tdwg4) 
+```
+
+3D. L4 Mainlands
 ```{r}
 step3main <- check[grep("0", check$island), ]
   
@@ -165,9 +283,59 @@ clipr::write_clip(l4_pol_main$tdwg4)
 ```
 
 
-4. Actually calculating the values for Table 1. 
+4. Actually calculating the values for Table 1. Can skip directly to the next step if you're just re-running code. 
 ```{r}
-data <- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/December_Database_Backup.csv")
+# data <- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/December_Database_Backup.csv")
+# 
+# #First, remove NA regions
+# NA_regions <- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/NA_regions_codes.csv")
+# 
+# #L2 Established
+# a <- c(1:1)
+# for (i in a) {
+# data$Established_L2 <- gsub(paste(NA_regions[i,1]), ",", data$Established_L2)
+# message('Running region ', i, ' of 1')
+# }
+# 
+# #L2 Invasive
+# for (i in a) {
+# data$Invasive_L2 <- gsub(paste(NA_regions[i,1]), ",", data$Invasive_L2)
+# message('Running region ', i, ' of 1')
+# }
+# 
+# #L3 Established
+# b <- c(1:117)
+# for (i in b) {
+# data$Established_L3 <- gsub(paste(NA_regions[i,2]), ",", data$Established_L3)
+# message('Running region ', i, ' of 117')
+# }
+# 
+# #L3 Invasive
+# for (i in b) {
+# data$Invasive_L3 <- gsub(paste(NA_regions[i,2]), ",", data$Invasive_L3)
+# message('Running region ', i, ' of 117')
+# }
+# 
+# #L4 Established
+# c <- c(1:141)
+# for (i in c) {
+# data$Established_L4 <- gsub(paste(NA_regions[i,3]), ",", data$Established_L4)
+# message('Running region ', i, ' of 141')
+# }
+# 
+# #L4 Invasive
+# for (i in c) {
+# data$Invasive_L4 <- gsub(paste(NA_regions[i,3]), ",", data$Invasive_L4)
+# message('Running region ', i, ' of 141')
+# }
+# 
+# fwrite(data, "C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/Dec_Dat_Bac_WO_NA_regions.csv")
+```
+
+
+4. (preface) Bring in codes and format them
+```{r}
+data <- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/Dec_Dat_Bac_WO_NA_regions.csv")
 codes <- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/Table1_Codes_R.csv")
 
 codes$Codes <- gsub(",", ",|,", codes$Codes)
@@ -212,34 +380,34 @@ inv_sp_l2 <- list()
 exp <- list()
 regions <- list()
 
-a <- c(1,4,7,10,13,16,19,22,25,28)
+a <- c(1:25)
 for (i in a) {
   
-est_sp_l2[[i]] <- data_l2[grep(paste(codes[i,3]), data_l2$Established_L2), ]
-inv_sp_l2[[i]] <- data_l2[grep(paste(codes[i,3]), data_l2$Invasive_L2), ]
+est_sp_l2[[i]] <- data_l2[grep(paste(codes[i,5]), data_l2$Established_L2), ]
+inv_sp_l2[[i]] <- data_l2[grep(paste(codes[i,5]), data_l2$Invasive_L2), ]
 
 exp[[i]] <- separate_rows(est_sp_l2[[i]], Established_L2, sep = ",")
 
-exp[[i]] <- exp[[i]][grep(paste(codes[i,3]), exp[[i]]$Established_L2), ]
+exp[[i]] <- exp[[i]][grep(paste(codes[i,5]), exp[[i]]$Established_L2), ]
 
 regions[[i]] <- distinct(exp[[i]],
                         Established_L2,
                         .keep_all = TRUE)
 
-Reg_Count_results[i,3] <- nrow(regions[[i]])
+Reg_Count_results[i,5] <- nrow(regions[[i]])
 
 
 est_sp_l2[[i]] <- distinct(est_sp_l2[[i]],
                         Accepted_name,
                         .keep_all = TRUE)
 
-Sp_Count_results[i,3] <- nrow(est_sp_l2[[i]])
+Sp_Count_results[i,5] <- nrow(est_sp_l2[[i]])
 
 inv_sp_l2[[i]] <- distinct(inv_sp_l2[[i]],
                         Accepted_name,
                         .keep_all = TRUE)
 
-Prop_results[i,3] <-  nrow(inv_sp_l2[[i]])/nrow(est_sp_l2[[i]])
+Prop_results[i,5] <-  nrow(inv_sp_l2[[i]])/nrow(est_sp_l2[[i]])
 }
 ```
 
@@ -260,36 +428,35 @@ inv_sp_l3 <- list()
 exp <- list()
 regions <- list()
 
-a <- c(2,5,8,11,14,17,20,23,26,29)
+a <- c(26:50)
 for (i in a) {
   
-est_sp_l3[[i]] <- data_l3[grep(paste(codes[i,3]), data_l3$Established_L3), ]
-inv_sp_l3[[i]] <- data_l3[grep(paste(codes[i,3]), data_l3$Invasive_L3), ]
+est_sp_l3[[i]] <- data_l3[grep(paste(codes[i,5]), data_l3$Established_L3), ]
+inv_sp_l3[[i]] <- data_l3[grep(paste(codes[i,5]), data_l3$Invasive_L3), ]
 
 exp[[i]] <- separate_rows(est_sp_l3[[i]], Established_L3, sep = ",")
 
-exp[[i]] <- exp[[i]][grep(paste(codes[i,3]), exp[[i]]$Established_L3), ]
+exp[[i]] <- exp[[i]][grep(paste(codes[i,5]), exp[[i]]$Established_L3), ]
 
 regions[[i]] <- distinct(exp[[i]],
                         Established_L3,
                         .keep_all = TRUE)
 
-Reg_Count_results[i,3] <- nrow(regions[[i]])
+Reg_Count_results[i,5] <- nrow(regions[[i]])
 
 
 est_sp_l3[[i]] <- distinct(est_sp_l3[[i]],
                         Accepted_name,
                         .keep_all = TRUE)
 
-Sp_Count_results[i,3] <- nrow(est_sp_l3[[i]])
+Sp_Count_results[i,5] <- nrow(est_sp_l3[[i]])
 
 inv_sp_l3[[i]] <- distinct(inv_sp_l3[[i]],
                         Accepted_name,
                         .keep_all = TRUE)
 
-Prop_results[i,3] <-  nrow(inv_sp_l3[[i]])/nrow(est_sp_l3[[i]])
+Prop_results[i,5] <-  nrow(inv_sp_l3[[i]])/nrow(est_sp_l3[[i]])
 }
-
 
 ```
 
@@ -310,34 +477,34 @@ inv_sp_l4 <- list()
 exp <- list()
 regions <- list()
 
-a <- c(3,6,9,12,15,18,21,24,27,30)
+a <- c(51:75)
 for (i in a) {
   
-est_sp_l4[[i]] <- data_l4[grep(paste(codes[i,3]), data_l4$Established_L4), ]
-inv_sp_l4[[i]] <- data_l4[grep(paste(codes[i,3]), data_l4$Invasive_L4), ]
+est_sp_l4[[i]] <- data_l4[grep(paste(codes[i,5]), data_l4$Established_L4), ]
+inv_sp_l4[[i]] <- data_l4[grep(paste(codes[i,5]), data_l4$Invasive_L4), ]
 
 exp[[i]] <- separate_rows(est_sp_l4[[i]], Established_L4, sep = ",")
 
-exp[[i]] <- exp[[i]][grep(paste(codes[i,3]), exp[[i]]$Established_L4), ]
+exp[[i]] <- exp[[i]][grep(paste(codes[i,5]), exp[[i]]$Established_L4), ]
 
 regions[[i]] <- distinct(exp[[i]],
                         Established_L4,
                         .keep_all = TRUE)
 
-Reg_Count_results[i,3] <- nrow(regions[[i]])
+Reg_Count_results[i,5] <- nrow(regions[[i]])
 
 
 est_sp_l4[[i]] <- distinct(est_sp_l4[[i]],
                         Accepted_name,
                         .keep_all = TRUE)
 
-Sp_Count_results[i,3] <- nrow(est_sp_l4[[i]])
+Sp_Count_results[i,5] <- nrow(est_sp_l4[[i]])
 
 inv_sp_l4[[i]] <- distinct(inv_sp_l4[[i]],
                         Accepted_name,
                         .keep_all = TRUE)
 
-Prop_results[i,3] <-  nrow(inv_sp_l4[[i]])/nrow(est_sp_l4[[i]])
+Prop_results[i,5] <-  nrow(inv_sp_l4[[i]])/nrow(est_sp_l4[[i]])
 }
 
 ```

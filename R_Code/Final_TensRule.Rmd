@@ -19,34 +19,6 @@ data <- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_
 
 ```
 
-Average range sizes (reported as the number of L3 regions included).
-```{r}
-#Size of average invaded range
-#avg_i <- separate_rows(data, Invasive_L3, sep=",")
-#avg_i <- avg_i[!(avg_i$Invasive_L3==""), ]
-#avg_i$point <- as.numeric(paste("1"))
-#avg_i <- avg_i %>%
-#    group_by(Accepted_name) %>% 
-#    summarise(sum = sum(point))
-#mean(avg_i$sum)
-#sd(avg_i$sum)
-
-#Size of average established range
-#avg_e <- separate_rows(data, Established_L3, sep=",")
-#avg_e <- avg_e[!(avg_e$Established_L3==""), ]
-#avg_e$point <- as.numeric(paste("1"))
-#avg_e <- avg_e %>%
-#    group_by(Accepted_name, status) %>% 
-#    summarise(sum = sum(point))
-
-#i_m <- avg_e[avg_e$status=="invasive",]
-#e_m <- avg_e[avg_e$status=="established",]
-
-#mean(i_m$sum)
-#sd(i_m$sum)
-#mean(e_m$sum)
-#sd(e_m$sum)
-```
 
 **WGSRPD Level 1 - Continents**
 
@@ -112,13 +84,15 @@ rm(Region_count)
 AllContsDestinations$EstablishedSpecies <- as.integer(AllContsDestinations$EstablishedSpecies)
 AllContsDestinations$InvasiveSpecies <- as.integer(AllContsDestinations$InvasiveSpecies)
 AllContsDestinations$Total <- (AllContsDestinations$EstablishedSpecies + AllContsDestinations$InvasiveSpecies)
+
+#Only use this line of code if you're doing the version of the analysis presented in Table S5. 
+#AllContsDestinations <- subset(AllContsDestinations, Total >= 50)
+
 AllContsDestinations$InvasionRate <- (AllContsDestinations$InvasiveSpecies/AllContsDestinations$Total)
 
 #What's the average invasion rate for all continents?
 #This is different than what's reported in the manuscript because this excludes Antarctica. 
 mean(AllContsDestinations$InvasionRate)
-median(AllContsDestinations$InvasionRate)
-hist(AllContsDestinations$InvasionRate)
 
 #Prepare data for plotting
 pd_1 <- AllContsDestinations[,c(1,6)]
@@ -152,7 +126,7 @@ test1tr <- wilcox.test(AllContsDestinations$InvasionRate, alternative = "greater
 test1tr
 #Even one-sided, nonparametric test agrees that L1 average is significantly greater than 20%.
 ```
-I recommend removing all objects except pd_1 from workspace and reloading the first code chunk at the top before proceeding to L2 regions. 
+I recommend removing all objects except pd_1 from workspace before proceeding to L2 regions. 
 
 **WGSRPD Level 2 - Sub-Continental Regions**
 
@@ -189,7 +163,7 @@ full_l2$L2 <- as.integer(full_l2$L2)
 full_l2 <- full_l2[order(full_l2$L2),]
 
 #Remove NA row
-full_l2 <- full_l2[-c(54),]
+full_l2 <- full_l2[-c(53),]
 ```
 
 Make a Data Table to Store L2 Results
@@ -202,7 +176,7 @@ All2Destinations$InvasiveSpecies <- ""
 
 Count established and invasive species for each L2 region
 ```{r}
-a <- c(1:53)
+a <- c(1:52)
 for (i in a) {
   
 #Need species with Invasive_L2 = whatever L2 region is in Row i
@@ -245,7 +219,7 @@ rm(Region_E)
 rm(Region_I)
 rm(Region_count)
   
- message('Running Region ', i, ' of 53')
+ message('Running Region ', i, ' of 52')
 
 }
 ```
@@ -255,18 +229,21 @@ rm(Region_count)
 All2Destinations <- as.data.frame(All2Destinations)
 All2Destinations <- replace_with_na(All2Destinations, replace = list(EstablishedSpecies = c("NA")))
 All2Destinations <- replace_with_na(All2Destinations, replace = list(InvasiveSpecies = c("NA")))
+L2NAs <- All2Destinations[!complete.cases(All2Destinations), ]
 All2Destinations <- na.omit(All2Destinations)
 
 #Calculate Invasion Rates
 All2Destinations$EstablishedSpecies <- as.integer(All2Destinations$EstablishedSpecies)
 All2Destinations$InvasiveSpecies <- as.integer(All2Destinations$InvasiveSpecies)
 All2Destinations$Total <- (All2Destinations$EstablishedSpecies + All2Destinations$InvasiveSpecies)
+
+#Only use this line of code if you're doing the version of the analysis presented in Table S5. 
+#All2Destinations <- subset(All2Destinations, Total >= 50)
+
 All2Destinations$InvasionRate <- (All2Destinations$InvasiveSpecies/All2Destinations$Total)
 
 #What's the average invasion rate for all L2 regions?
 mean(All2Destinations$InvasionRate)
-median(All2Destinations$InvasionRate)
-hist(All2Destinations$InvasionRate)
 
 #Prepare data for plotting
 pd_2 <- All2Destinations[,c(1,5)]
@@ -300,7 +277,7 @@ test2tr <- wilcox.test(All2Destinations$InvasionRate, mu = 0.20)
 test2tr
 #Nonparametric test agrees that L2 average is not significantly different than 20%.
 ```
-I recommend removing all objects except pd_1 and pd_2 from workspace and reloading the first code chunk at the top before proceeding to L3 regions. 
+I recommend removing all objects except pd_1 and pd_2 from workspace before proceeding to L3 regions. 
 
 **WGSRPD Level 3 - Countries/States**
 
@@ -402,18 +379,21 @@ rm(Region_count)
 All3Destinations <- as.data.frame(All3Destinations)
 All3Destinations <- replace_with_na(All3Destinations, replace = list(EstablishedSpecies = c("NA")))
 All3Destinations <- replace_with_na(All3Destinations, replace = list(InvasiveSpecies = c("NA")))
+L3NAs <- All3Destinations[!complete.cases(All3Destinations), ]
 All3Destinations <- na.omit(All3Destinations)
 
 #Calculate Invasion Rates
 All3Destinations$EstablishedSpecies <- as.integer(All3Destinations$EstablishedSpecies)
 All3Destinations$InvasiveSpecies <- as.integer(All3Destinations$InvasiveSpecies)
 All3Destinations$Total <- (All3Destinations$EstablishedSpecies + All3Destinations$InvasiveSpecies)
+
+#Only use this line of code if you're doing the version of the analysis presented in Table S5. 
+#All3Destinations <- subset(All3Destinations, Total >= 50)
+
 All3Destinations$InvasionRate <- (All3Destinations$InvasiveSpecies/All3Destinations$Total)
 
 #What's the average invasion rate for all L3 regions?
 mean(All3Destinations$InvasionRate)
-median(All3Destinations$InvasionRate)
-hist(All3Destinations$InvasionRate)
 
 #Prepare data for plotting
 pd_3 <- All3Destinations[,c(1,5)]
@@ -425,6 +405,7 @@ All3Destinations$L3s <- gsub(",", "", All3Destinations$L3s)
 #Export for mapping in ArcGIS Pro
 #fwrite(All3Destinations, "C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/L3MappingData.csv")
 ```
+
 
 Compare L3 average to Tens Rule (Significance Testing)
 ```{r}
@@ -552,18 +533,21 @@ rm(Region_count)
 All4Destinations <- as.data.frame(All4Destinations)
 All4Destinations <- replace_with_na(All4Destinations, replace = list(EstablishedSpecies = c("NA")))
 All4Destinations <- replace_with_na(All4Destinations, replace = list(InvasiveSpecies = c("NA")))
+L4NAs <- All4Destinations[!complete.cases(All4Destinations), ]
 All4Destinations <- na.omit(All4Destinations)
 
 #Calculate Invasion Rates
 All4Destinations$EstablishedSpecies <- as.integer(All4Destinations$EstablishedSpecies)
 All4Destinations$InvasiveSpecies <- as.integer(All4Destinations$InvasiveSpecies)
 All4Destinations$Total <- (All4Destinations$EstablishedSpecies + All4Destinations$InvasiveSpecies)
+
+#Only use this line of code if you're doing the version of the analysis presented in Table S5. 
+#All4Destinations <- subset(All4Destinations, Total >= 50)
+
 All4Destinations$InvasionRate <- (All4Destinations$InvasiveSpecies/All4Destinations$Total)
 
 #What's the average invasion rate for all L4 regions?
 mean(All4Destinations$InvasionRate)
-median(All4Destinations$InvasionRate)
-hist(All4Destinations$InvasionRate)
 
 #Prepare data for plotting
 pd_4 <- All4Destinations[,c(1,5)]
@@ -615,12 +599,31 @@ pd <- setDT(pd)[Scale == "L4", pv:="0.048"]
 pd <- pd %>% 
   group_by(Scale) %>% mutate(n = n()) %>% 
   mutate(label = paste0(Scale))
+
+#View confidence intervals
+mean_cl_normal <- function(data, alpha = 0.05) {
+  n <- length(data)
+  mean_value <- mean(data)
+  std_dev <- sd(data)
+  stderr <- std_dev / sqrt(n)
+  z <- qnorm(1 - alpha/2)
+  lower <- mean_value - z * stderr
+  upper <- mean_value + z * stderr
+  ci <- c(lower, upper)
+  result <- list(mean = mean_value, ci = ci)
+  return(result)
+}
+
+mean_cl_normal(pd_1$InvasionRate)
+mean_cl_normal(pd_2$InvasionRate)
+mean_cl_normal(pd_3$InvasionRate)
+mean_cl_normal(pd_4$InvasionRate)
 ```
 
 Build and export plot (Fig. 1 Panel E)
 ```{r}
 #Export plot
-tiff("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/Figures and Figure Data/TensRule/test.tiff",
+tiff("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/Figures and Figure Data/TensRule/test2.tiff",
      units = "in",
      width = 1.2671,
      height = 3.321,
@@ -680,10 +683,14 @@ pairwise.wilcox.test(pd$InvasionRate, pd$Scale, p.adjust.method = "bonferroni")
 #t-test thinks 2-3 is not significant, wilcoxon thinks it is.
 #Both tests agree the remaining combinations are significant. 
 
-#Boxplot of invasion rate by scale. 
-boxplot(InvasionRate~Scale, data = pd)
- abline(h=0.1, col="red", lwd=2)
-#Here, the medians look closer to 10%, but the means we calculated/plotted above seem to be better visualizations of the significance testing results.
-#This is why Table 1 is important - it breaks down these invasion rate by island/mainland, scale, and climate, which gives a much better view of the variation at each scale. See Table1.Rmd (in the same GitHub repo) for that data. 
+```
+
+Compile NA regions
+```{r}
+require(qpcR)
+NA_regions <- qpcR:::cbind.na(L2NAs, L3NAs, L4NAs)
+NA_regions <- NA_regions[,c(1,4,7)]
+
+fwrite(NA_regions, "C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/NA_regions_codes.csv")
 ```
 
