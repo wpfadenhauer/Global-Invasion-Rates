@@ -17,6 +17,10 @@ require(Hmisc)
 #Load data
 data <- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/December_Database_Backup.csv")
 
+#data_L1_I <- data[!(data$Invasive_L1 == ""), ]
+#data_L3_I <- data[!(data$Invasive_L3 == ""), ]
+#New_L2_Invaders <- anti_join(data_L1_I, data_L3_I, by="Accepted_name")
+#data <- anti_join(data, New_L2_Invaders, by="Accepted_name")
 ```
 
 
@@ -125,6 +129,13 @@ test1mw
 test1tr <- wilcox.test(AllContsDestinations$InvasionRate, alternative = "greater", mu = 0.20)
 test1tr
 #Even one-sided, nonparametric test agrees that L1 average is significantly greater than 20%.
+
+#Binomial GLM
+AllContsDestinations$os <-qlogis(0.1)
+test_glm <- glm(cbind(AllContsDestinations$InvasiveSpecies,AllContsDestinations$EstablishedSpecies) ~ offset(AllContsDestinations$os) + 1, family = binomial(link="logit"))
+
+summary(test_glm)
+#GLM agrees with previous two tests
 ```
 I recommend removing all objects except pd_1 from workspace before proceeding to L2 regions. 
 
@@ -134,6 +145,11 @@ Need to create a list of all L2 regions
 ```{r}
 #Reload data just to be safe
 data <- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/December_Database_Backup.csv")
+
+#data_L1_I <- data[!(data$Invasive_L1 == ""), ]
+#data_L3_I <- data[!(data$Invasive_L3 == ""), ]
+#New_L2_Invaders <- anti_join(data_L1_I, data_L3_I, by="Accepted_name")
+#data <- anti_join(data, New_L2_Invaders, by="Accepted_name")
 
 #Expand L4 regions
 data_e <- separate_rows(data, Established_L2, sep = ",")
@@ -276,6 +292,13 @@ test2mw
 test2tr <- wilcox.test(All2Destinations$InvasionRate, mu = 0.20)
 test2tr
 #Nonparametric test agrees that L2 average is not significantly different than 20%.
+
+#Binomial GLM
+All2Destinations$os <-qlogis(0.1)
+test_glm2 <- glm(cbind(All2Destinations$InvasiveSpecies,All2Destinations$EstablishedSpecies) ~ offset(All2Destinations$os) + 1, family = binomial(link="logit"))
+
+summary(test_glm2)
+#GLM agrees with previous two tests
 ```
 I recommend removing all objects except pd_1 and pd_2 from workspace before proceeding to L3 regions. 
 
@@ -285,6 +308,11 @@ Need to create a list of all L3 regions
 ```{r}
 #Reload data just to be safe
 data <- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/December_Database_Backup.csv")
+
+#data_L1_I <- data[!(data$Invasive_L1 == ""), ]
+#data_L3_I <- data[!(data$Invasive_L3 == ""), ]
+#New_L2_Invaders <- anti_join(data_L1_I, data_L3_I, by="Accepted_name")
+#data <- anti_join(data, New_L2_Invaders, by="Accepted_name")
 
 #Expand L3 regions
 data_e <- separate_rows(data, Established_L3, sep = ",")
@@ -426,6 +454,14 @@ test3mw
 test3tr <- wilcox.test(All3Destinations$InvasionRate, alternative = "less", mu = 0.20)
 test3tr
 #Nonparametric test agrees that L3 values are significantly lower than 20%. 
+
+#Binomial GLM
+All3Destinations$os <-qlogis(0.1)
+test_glm3 <- glm(cbind(All3Destinations$InvasiveSpecies,All3Destinations$EstablishedSpecies) ~ offset(All3Destinations$os) + 1, family = binomial(link="logit"))
+
+summary(test_glm3)
+#GLM agrees with previous two tests
+
 ```
 I recommend removing all objects except pd_1, pd_2, and pd_3 from workspace and reloading the first code chunk at the top before proceeding to L4 regions. 
 
@@ -436,6 +472,11 @@ Need to create a list of all L4 regions
 ```{r}
 #Reload data just to be safe
 data <- fread("C:/Users/wpfadenhauer/OneDrive - University of Massachusetts/CH2_InvaderFlows/R_files/December_Database_Backup.csv")
+
+#data_L1_I <- data[!(data$Invasive_L1 == ""), ]
+#data_L3_I <- data[!(data$Invasive_L3 == ""), ]
+#New_L2_Invaders <- anti_join(data_L1_I, data_L3_I, by="Accepted_name")
+#ata <- anti_join(data, New_L2_Invaders, by="Accepted_name")
 
 #Expand L4 regions
 data_e <- separate_rows(data, Established_L4, sep = ",")
@@ -571,6 +612,13 @@ test4mw <- wilcox.test(All4Destinations$InvasionRate, alternative = "less", mu =
 test4mw
 # This is the only time the nonparametric test disagrees with the t-test.
 # Nonparametric test thinks L4 average is significantly less than 10%. 
+
+#Binomial GLM
+All4Destinations$os <-qlogis(0.1)
+test_glm4 <- glm(cbind(All4Destinations$InvasiveSpecies,All4Destinations$EstablishedSpecies) ~ offset(All4Destinations$os) + 1, family = binomial(link="logit"))
+
+summary(test_glm4)
+#GLM agrees with t-test, but not Wilcoxon. 
 ```
 
 **Confidence Interval Plot**
@@ -590,10 +638,10 @@ pd <- rbind(pd, pd_4)
 #Attach p-values
 #These p-values came from objects test, test2, test3, test4
 pd$pv <-""
-pd <- setDT(pd)[Scale == "L1", pv:="2.4e-05"]
-pd <- setDT(pd)[Scale == "L2", pv:="2.4e-05"]
-pd <- setDT(pd)[Scale == "L3", pv:="1.3e-07"]
-pd <- setDT(pd)[Scale == "L4", pv:="0.048"]
+pd <- setDT(pd)[Scale == "L1", pv:="5.304e-05"]
+pd <- setDT(pd)[Scale == "L2", pv:="4.279e-05"]
+pd <- setDT(pd)[Scale == "L3", pv:="2.012e-08"]
+pd <- setDT(pd)[Scale == "L4", pv:="0.2558"]
 
 #Attach sample sizes
 pd <- pd %>% 
@@ -682,6 +730,46 @@ pairwise.wilcox.test(pd$InvasionRate, pd$Scale, p.adjust.method = "bonferroni")
 #Both tests agree that 1 and 2 are not significant.
 #t-test thinks 2-3 is not significant, wilcoxon thinks it is.
 #Both tests agree the remaining combinations are significant. 
+
+
+#Same thing with GLM
+
+All2_glm <- All2Destinations[,c(2,3)]
+All2_glm$Level <- "2"
+
+All3_glm <- All3Destinations[,c(2,3)]
+All3_glm$Level <- "3"
+
+All4_glm <- All4Destinations[,c(2,3)]
+All4_glm$Level <- "4"
+
+All1_glm <- AllContsDestinations[,c(3,4)]
+All1_glm$Level <- "1"
+
+all_glm <- rbind(All1_glm,All2_glm,All3_glm,All4_glm)
+
+test_glm5 <- glm(cbind(all_glm$InvasiveSpecies, all_glm$EstablishedSpecies) ~ all_glm$Level, family = binomial(link="logit"))
+summary(test_glm5)
+#Looks like it thinks all combinations are significant
+
+#Check just 1 vs 2
+glm1and2 <- rbind(All1_glm,All2_glm)
+
+test_glm1and2 <- glm(cbind(glm1and2$InvasiveSpecies, glm1and2$EstablishedSpecies) ~ glm1and2$Level, family = binomial(link="logit"))
+
+summary(test_glm1and2)
+#Thinks 1 and 2 are different, which is different from previous 2 tests
+
+
+#Check just 2 and 3
+glm2and3 <- rbind(All2_glm,All3_glm)
+
+test_glm2and3 <- glm(cbind(glm2and3$InvasiveSpecies, glm2and3$EstablishedSpecies) ~ glm2and3$Level, family = binomial(link="logit"))
+
+summary(test_glm2and3)
+#Thinks 2 and 3 are different, which agrees with wilcoxon but differs with t-test. 
+
+#All other combinations are agreed upon by all three tests: they are all significant. 
 
 ```
 

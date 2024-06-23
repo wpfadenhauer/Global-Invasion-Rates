@@ -415,15 +415,33 @@ GST <- Global[c(1,4),]
 prop.test(GST$InvasiveSpecies, GST$TotalSpecies, alternative = c("greater"), conf.level=0.95)
 #significant
 
+#All islands vs. Mainlands (but now as a GLM)
+GST$EstablishedSpecies <- GST$TotalSpecies - GST$InvasiveSpecies
+test_glm6 <- glm(cbind(GST$InvasiveSpecies, GST$EstablishedSpecies) ~ GST$group, family = binomial(link="logit"))
+summary(test_glm6)
+#Matches above, significant
+
 #Oceanic Islands vs. Mainlands
 GST <- Global[c(2,4),]
 prop.test(GST$InvasiveSpecies, GST$TotalSpecies, alternative = c("greater"), conf.level=0.95)
 #significant
 
+#Oceanic islands vs. Mainlands (but now as a GLM)
+GST$EstablishedSpecies <- GST$TotalSpecies - GST$InvasiveSpecies
+test_glm7 <- glm(cbind(GST$InvasiveSpecies, GST$EstablishedSpecies) ~ GST$group, family = binomial(link="logit"))
+summary(test_glm7)
+#Matches above, significant
+
 #Cont. Islands vs. Mainlands
 GST <- Global[c(3,4),]
 prop.test(GST$InvasiveSpecies, GST$TotalSpecies, alternative = c("greater"), conf.level=0.95)
 # NOT significant
+
+#Cont. islands vs. Mainlands (but now as a GLM)
+GST$EstablishedSpecies <- GST$TotalSpecies - GST$InvasiveSpecies
+test_glm8 <- glm(cbind(GST$InvasiveSpecies, GST$EstablishedSpecies) ~ GST$group, family = binomial(link="logit"))
+summary(test_glm8)
+# Matches above, NOT significant
 
 
 #WGSRPD Level 3 scale comparison
@@ -481,6 +499,34 @@ t.test(L3STI_O$InvasionRate, L3STM$InvasionRate, alternative = "greater")
 #Cont. islands vs. mainlands
 L3STI_C <- L3STI[L3STI$geo =="Continental",]
 t.test(L3STI_C$InvasionRate, L3STM$InvasionRate, alternative = "greater")
+#not significant
+
+
+
+
+
+
+#All the same tests, now with GLM
+pd_3_alt <-left_join(All3Destinations, all_islands_L3, by=c("L3s"="tdwg4")) 
+
+#All islands vs all mainlands
+test_glm9 <- glm(cbind(pd_3_alt$InvasiveSpecies, pd_3_alt$EstablishedSpecies) ~ pd_3_alt$island, family = binomial(link="logit"))
+summary(test_glm9)
+#significant
+
+#Now just oceanic islands vs mainlands
+pd_3_alt_i_o <- pd_3_alt[!pd_3_alt$geo =="Continental",]
+
+test_glm10 <- glm(cbind(pd_3_alt_i_o$InvasiveSpecies, pd_3_alt_i_o$EstablishedSpecies) ~ pd_3_alt_i_o$island, family = binomial(link="logit"))
+summary(test_glm10)
+#significant
+
+#Now just continental islands vs mainlands
+pd_3_alt_i_c <- pd_3_alt[!pd_3_alt$geo =="Oceanic",]
+
+test_glm11 <- glm(cbind(pd_3_alt_i_c$InvasiveSpecies, pd_3_alt_i_c$EstablishedSpecies) ~ pd_3_alt_i_c$island, family = binomial(link="logit"))
+summary(test_glm11)
+#differs from above - this one is significant
 
 ```
 
